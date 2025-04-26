@@ -1490,7 +1490,7 @@ export default function StudyPage() {
 
   const handleLessonClick = async (subjectId: string, topicId: string, lessonId: number) => {
     if (user) {
-      await markTopicCompleted(user.uid, topicId);
+      await markTopicCompleted(user.uid, subjectId, topicId);
     }
     setActiveLesson({ subjectId, topicId, lessonId });
   };
