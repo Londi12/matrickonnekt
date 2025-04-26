@@ -1,22 +1,18 @@
 import { db } from '../config/firebase';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { UserProgress, Activity, Achievement } from '../types/user';
+import { UserProgress, Activity, Achievement, StudyActivity } from '../types/user';
 
 // Initialize user progress when they first sign up
 export async function initializeUserProgress(userId: string) {
   const userProgressRef = doc(db, 'userProgress', userId);
   
   const initialProgress: UserProgress = {
-    completedTopics: [],
-    studyTime: {
-      weekly: 0,
-      total: 0
-    },
-    achievements: [],
-    streak: {
-      current: 0,
-      lastStudyDate: new Date().toISOString()
-    },
+    userId,
+    subjects: {},
+    totalStudyTime: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+    lastStudyDate: new Date(),
     recentActivity: []
   };
 
@@ -42,35 +38,46 @@ export async function updateStudyTime(userId: string, minutesStudied: number) {
   const progress = await getUserProgress(userId);
 
   if (progress) {
-    const updatedProgress = {
-      'studyTime.weekly': progress.studyTime.weekly + minutesStudied,
-      'studyTime.total': progress.studyTime.total + minutesStudied
-    };
-
-    await updateDoc(userProgressRef, updatedProgress);
+    const totalStudyTime = progress.totalStudyTime + minutesStudied;
+    await updateDoc(userProgressRef, { totalStudyTime });
   }
 }
 
 // Mark topic as completed
-export async function markTopicCompleted(userId: string, topicId: string) {
+export async function markTopicCompleted(userId: string, subjectId: string, topicId: string) {
   const userProgressRef = doc(db, 'userProgress', userId);
   const progress = await getUserProgress(userId);
 
-  if (progress && !progress.completedTopics.includes(topicId)) {
-    await updateDoc(userProgressRef, {
-      completedTopics: [...progress.completedTopics, topicId]
-    });
-
-    // Add activity
-    const activity: Activity = {
-      id: Date.now().toString(),
-      type: 'chapter',
-      title: `Completed Topic: ${topicId}`,
-      details: 'Topic completed successfully',
-      timestamp: new Date().toISOString()
+  if (progress) {
+    const subject = progress.subjects[subjectId] || {
+      progress: 0,
+      completedTopics: [],
+      lastStudied: new Date()
     };
 
-    await addActivity(userId, activity);
+    if (!subject.completedTopics.includes(topicId)) {
+      const updatedSubjects = {
+        ...progress.subjects,
+        [subjectId]: {
+          ...subject,
+          completedTopics: [...subject.completedTopics, topicId],
+          lastStudied: new Date()
+        }
+      };
+
+      await updateDoc(userProgressRef, { subjects: updatedSubjects });
+
+      // Add activity
+      const activity: StudyActivity = {
+        id: Date.now().toString(),
+        type: 'study',
+        subject: subjectId,
+        topic: topicId,
+        timestamp: new Date()
+      };
+
+      await addActivity(userId, activity);
+    }
   }
 }
 
@@ -80,31 +87,35 @@ export async function updateStreak(userId: string) {
   const progress = await getUserProgress(userId);
 
   if (progress) {
-    const lastStudyDate = new Date(progress.streak.lastStudyDate);
+    const lastStudyDate = new Date(progress.lastStudyDate);
     const today = new Date();
     const diffDays = Math.floor((today.getTime() - lastStudyDate.getTime()) / (1000 * 60 * 60 * 24));
 
-    let newStreak = progress.streak.current;
+    let currentStreak = progress.currentStreak;
     if (diffDays === 1) {
       // Consecutive day
-      newStreak += 1;
+      currentStreak += 1;
+      const longestStreak = Math.max(currentStreak, progress.longestStreak);
+      await updateDoc(userProgressRef, {
+        currentStreak,
+        longestStreak,
+        lastStudyDate: today
+      });
     } else if (diffDays > 1) {
       // Streak broken
-      newStreak = 1;
+      await updateDoc(userProgressRef, {
+        currentStreak: 1,
+        lastStudyDate: today
+      });
     }
 
-    await updateDoc(userProgressRef, {
-      'streak.current': newStreak,
-      'streak.lastStudyDate': today.toISOString()
-    });
-
     // Check for streak achievements
-    if (newStreak === 7) {
+    if (currentStreak === 7) {
       await addAchievement(userId, {
         id: 'week-streak',
-        name: 'Week Warrior',
+        title: 'Week Warrior',
         description: 'Studied for 7 days in a row!',
-        earnedAt: new Date().toISOString(),
+        earnedDate: new Date().toISOString(),
         icon: '🔥'
       });
     }
@@ -117,19 +128,17 @@ export async function addAchievement(userId: string, achievement: Achievement) {
   const progress = await getUserProgress(userId);
 
   if (progress) {
-    const hasAchievement = progress.achievements.some(a => a.id === achievement.id);
+    const hasAchievement = progress.recentActivity.some(
+      activity => activity.topic === achievement.title
+    );
+    
     if (!hasAchievement) {
-      await updateDoc(userProgressRef, {
-        achievements: [...progress.achievements, achievement]
-      });
-
-      // Add activity
-      const activity: Activity = {
+      const activity: StudyActivity = {
         id: Date.now().toString(),
-        type: 'achievement',
-        title: `New Achievement: ${achievement.name}`,
-        details: achievement.description,
-        timestamp: new Date().toISOString()
+        type: 'study',
+        subject: 'achievements',
+        topic: achievement.title,
+        timestamp: new Date()
       };
 
       await addActivity(userId, activity);
@@ -138,7 +147,7 @@ export async function addAchievement(userId: string, achievement: Achievement) {
 }
 
 // Add activity
-export async function addActivity(userId: string, activity: Activity) {
+export async function addActivity(userId: string, activity: StudyActivity) {
   const userProgressRef = doc(db, 'userProgress', userId);
   const progress = await getUserProgress(userId);
 
@@ -152,13 +161,12 @@ export async function addActivity(userId: string, activity: Activity) {
 
 // Record quiz completion
 export async function recordQuizCompletion(userId: string, subject: string, score: number) {
-  const activity: Activity = {
+  const activity: StudyActivity = {
     id: Date.now().toString(),
-    type: 'quiz',
-    title: `Completed ${subject} Quiz`,
-    details: `Scored ${score}%`,
-    timestamp: new Date().toISOString(),
+    type: 'study',
     subject,
+    topic: 'quiz',
+    timestamp: new Date(),
     score
   };
 
@@ -168,9 +176,9 @@ export async function recordQuizCompletion(userId: string, subject: string, scor
   if (score >= 90) {
     await addAchievement(userId, {
       id: 'high-scorer',
-      name: 'High Scorer',
+      title: 'High Scorer',
       description: 'Scored 90% or higher on a quiz!',
-      earnedAt: new Date().toISOString(),
+      earnedDate: new Date().toISOString(),
       icon: '🎯'
     });
   }
