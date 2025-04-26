@@ -1,6 +1,6 @@
 import { db } from '../firebase/config';
 import { doc, getDoc, updateDoc, setDoc, Timestamp } from 'firebase/firestore';
-import { UserProgress, Activity, Achievement } from '@/app/types/user';
+import { UserProgress, Activity, Achievement, StudyActivity } from '@/app/types/user';
 
 export const getUserProgress = async (userId: string): Promise<UserProgress | null> => {
   try {
@@ -31,18 +31,12 @@ export const updateUserProgress = async (
 export const initializeUserProgress = async (userId: string): Promise<boolean> => {
   try {
     const initialProgress: UserProgress = {
-      completedTopics: [],
-      studyTime: {
-        daily: 0,
-        weekly: 0,
-        total: 0
-      },
-      streak: {
-        current: 0,
-        best: 0,
-        lastStudyDate: new Date().toISOString()
-      },
-      achievements: [],
+      userId,
+      subjects: {},
+      totalStudyTime: 0,
+      currentStreak: 0,
+      longestStreak: 0,
+      lastStudyDate: new Date(),
       recentActivity: []
     };
 
@@ -56,16 +50,16 @@ export const initializeUserProgress = async (userId: string): Promise<boolean> =
 
 export const addActivity = async (
   userId: string,
-  activity: Omit<Activity, 'id' | 'timestamp'>
+  activity: Omit<StudyActivity, 'id' | 'timestamp'>
 ): Promise<boolean> => {
   try {
     const userProgress = await getUserProgress(userId);
     if (!userProgress) return false;
 
-    const newActivity: Activity = {
+    const newActivity: StudyActivity = {
       ...activity,
       id: Math.random().toString(36).substr(2, 9),
-      timestamp: new Date().toISOString()
+      timestamp: new Date()
     };
 
     const recentActivity = [newActivity, ...userProgress.recentActivity].slice(0, 10);
@@ -86,33 +80,35 @@ export const updateStudyTime = async (
     if (!userProgress) return false;
 
     const now = new Date();
-    const lastStudyDate = new Date(userProgress.streak.lastStudyDate);
+    const lastStudyDate = new Date(userProgress.lastStudyDate);
     const isNewDay = now.toDateString() !== lastStudyDate.toDateString();
 
     // Update streak
-    let streak = userProgress.streak;
+    let currentStreak = userProgress.currentStreak;
     if (isNewDay) {
       const daysSinceLastStudy = Math.floor(
         (now.getTime() - lastStudyDate.getTime()) / (1000 * 60 * 60 * 24)
       );
       
       if (daysSinceLastStudy === 1) {
-        streak.current += 1;
-        streak.best = Math.max(streak.current, streak.best);
+        currentStreak += 1;
+        const longestStreak = Math.max(currentStreak, userProgress.longestStreak);
+        await updateUserProgress(userId, { 
+          currentStreak,
+          longestStreak,
+          lastStudyDate: now
+        });
       } else if (daysSinceLastStudy > 1) {
-        streak.current = 1;
+        await updateUserProgress(userId, { 
+          currentStreak: 1,
+          lastStudyDate: now
+        });
       }
-      streak.lastStudyDate = now.toISOString();
     }
 
     // Update study time
-    const studyTime = {
-      daily: isNewDay ? minutesStudied : userProgress.studyTime.daily + minutesStudied,
-      weekly: userProgress.studyTime.weekly + minutesStudied,
-      total: userProgress.studyTime.total + minutesStudied
-    };
-
-    await updateUserProgress(userId, { studyTime, streak });
+    const totalStudyTime = userProgress.totalStudyTime + minutesStudied;
+    await updateUserProgress(userId, { totalStudyTime });
     return true;
   } catch (error) {
     console.error('Error updating study time:', error);
