@@ -1,12 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   reactStrictMode: true,
   swcMinify: true,
   images: {
     domains: ['firebasestorage.googleapis.com'],
   },
-  // Disable standalone output
-  output: 'export',
   // Ensure proper static file serving
   poweredByHeader: false,
   compress: true,
