@@ -74,19 +74,9 @@ export default function DashboardPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Welcome back, {user.email}!</h1>
-              <p className="text-gray-600 mt-1">Track your learning progress and achievements</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                <BellIcon className="h-6 w-6" />
-              </button>
-              <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                <UserCircleIcon className="h-6 w-6" />
-              </button>
-            </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Welcome back, {user.email}!</h1>
+            <p className="text-gray-600 mt-1">Track your learning progress and achievements</p>
           </div>
         </div>
 
@@ -164,7 +154,33 @@ export default function DashboardPage() {
           {/* Right Column */}
           <div className="space-y-8">
             {/* Activity Calendar */}
-            <ActivityCalendar activities={progress.recentActivity || []} />
+            {(() => {
+              console.log('Raw activities:', progress.recentActivity);
+              const validActivities = progress.recentActivity?.filter(activity => {
+                console.log('Processing activity:', activity);
+                console.log('Activity type:', typeof activity);
+                console.log('Activity keys:', Object.keys(activity));
+                
+                if (!activity || typeof activity !== 'object') {
+                  console.log('Invalid activity object:', activity);
+                  return false;
+                }
+
+                if (!activity.timestamp) {
+                  console.log('Missing timestamp:', activity);
+                  return false;
+                }
+
+                const date = new Date(activity.timestamp);
+                const isValid = !isNaN(date.getTime());
+                if (!isValid) {
+                  console.log('Invalid timestamp:', activity.timestamp);
+                }
+                return isValid;
+              }) || [];
+              console.log('Valid activities:', validActivities);
+              return <ActivityCalendar activities={validActivities} />;
+            })()}
 
             {/* Subject Progress */}
             <div className="bg-white rounded-lg shadow-sm p-6">

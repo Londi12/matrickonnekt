@@ -25,12 +25,38 @@ export default function ActivityCalendar({ activities }: ActivityCalendarProps) 
 
   // Create a map of activities by date
   const activitiesByDate = activities.reduce((acc, activity) => {
-    const date = format(activity.timestamp, 'yyyy-MM-dd');
-    if (!acc[date]) {
-      acc[date] = [];
+    if (!activity || typeof activity !== 'object') {
+      console.error('Invalid activity object:', activity);
+      return acc;
     }
-    acc[date].push(activity);
-    return acc;
+
+    try {
+      // Convert string timestamp to Date if needed
+      let timestamp: Date;
+      if (activity.timestamp instanceof Date) {
+        timestamp = activity.timestamp;
+      } else if (typeof activity.timestamp === 'string') {
+        timestamp = new Date(activity.timestamp);
+      } else {
+        console.error('Invalid timestamp type:', typeof activity.timestamp);
+        return acc;
+      }
+      
+      if (isNaN(timestamp.getTime())) {
+        console.error('Invalid timestamp value:', activity.timestamp);
+        return acc;
+      }
+      
+      const date = format(timestamp, 'yyyy-MM-dd');
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(activity);
+      return acc;
+    } catch (error) {
+      console.error('Error processing activity:', activity, error);
+      return acc;
+    }
   }, {} as Record<string, StudyActivity[]>);
 
   // Create a map of todos by date

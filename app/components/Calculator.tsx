@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { XMarkIcon, BackspaceIcon } from '@heroicons/react/24/outline';
 import { useCalculator } from '../context/CalculatorContext';
 
@@ -12,6 +12,43 @@ export default function Calculator() {
   const [isScientificMode, setIsScientificMode] = useState(false);
   const [memory, setMemory] = useState(0);
   const [angleMode, setAngleMode] = useState<'DEG' | 'RAD'>('DEG');
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.target instanceof HTMLElement && e.target.closest('.calculator-header')) {
+      setIsDragging(true);
+      setDragOffset({
+        x: e.clientX - position.x,
+        y: e.clientY - position.y
+      });
+    }
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (isDragging) {
+      setPosition({
+        x: e.clientX - dragOffset.x,
+        y: e.clientY - dragOffset.y
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
 
   const handleNumber = (num: string) => {
     if (isNewNumber) {
@@ -168,10 +205,19 @@ export default function Calculator() {
   if (!isCalculatorOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-[32rem] overflow-hidden">
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div 
+        className="bg-white rounded-2xl shadow-2xl w-[32rem] overflow-hidden"
+        style={{
+          position: 'absolute',
+          left: position.x,
+          top: position.y,
+          cursor: isDragging ? 'grabbing' : 'default'
+        }}
+        onMouseDown={handleMouseDown}
+      >
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4">
+        <div className="calculator-header bg-gradient-to-r from-blue-600 to-blue-700 p-4 cursor-grab">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-bold text-white">Calculator</h2>
             <div className="flex items-center space-x-2">

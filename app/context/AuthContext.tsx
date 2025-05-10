@@ -7,9 +7,10 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  signInWithRedirect,
+  signInWithPopup,
   GoogleAuthProvider,
-  getRedirectResult
+  browserLocalPersistence,
+  setPersistence
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { useRouter } from 'next/navigation';
@@ -41,27 +42,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
+    // Set persistence to LOCAL to maintain session across page refreshes
+    setPersistence(auth, browserLocalPersistence).catch(console.error);
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
     });
 
-    // Handle Google sign-in redirect
-    const handleRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result) {
-          router.push('/dashboard');
-        }
-      } catch (error) {
-        setError('Failed to sign in with Google');
-      }
-    };
-
-    handleRedirectResult();
-
     return () => unsubscribe();
-  }, [router]);
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -92,8 +82,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       provider.setCustomParameters({
         prompt: 'select_account'
       });
-      await signInWithRedirect(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      if (result.user) {
+        router.push('/dashboard');
+      }
     } catch (error: any) {
+      console.error('Google sign-in error:', error);
       setError(error.message);
       throw error;
     }

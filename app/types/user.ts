@@ -4,6 +4,9 @@ export interface UserProgress {
     [subjectId: string]: {
       progress: number;
       completedTopics: string[];
+      completedLessons: {
+        [topicId: string]: number[];
+      };
       lastStudied: Date;
     };
   };
@@ -19,7 +22,8 @@ export interface StudyActivity {
   type: 'study' | 'practice' | 'resource';
   subject: string;
   topic: string;
-  timestamp: Date;
+  lessonId?: number;
+  timestamp: Date | string;
   duration?: number;
   score?: number;
 }
@@ -37,8 +41,8 @@ export interface Achievement {
   id: string;
   title: string;
   description: string;
-  earnedDate: string;
   icon: string;
+  unlockedAt: Date;
 }
 
 export interface Activity {

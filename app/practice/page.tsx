@@ -15,6 +15,7 @@ import {
   BookmarkIcon,
   MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
+import SignInModal from '../components/SignInModal';
 
 // Mock data for demonstration
 const subjects = [
@@ -32,7 +33,8 @@ const subjects = [
       { id: 'statistics', name: 'Statistics' },
       { id: 'trigonometry', name: 'Trigonometry' },
       { id: 'analytical', name: 'Analytical Geometry' },
-      { id: 'euclidean', name: 'Euclidean Geometry' }
+      { id: 'euclidean', name: 'Euclidean Geometry' },
+      { id: 'tests', name: 'Tests' }
     ]
   },
   {
@@ -45,7 +47,8 @@ const subjects = [
       { id: 'finance', name: 'Finance' },
       { id: 'measurement', name: 'Measurement' },
       { id: 'data', name: 'Data Handling' },
-      { id: 'probability', name: 'Probability' }
+      { id: 'probability', name: 'Probability' },
+      { id: 'tests', name: 'Tests' }
     ]
   },
   {
@@ -60,7 +63,8 @@ const subjects = [
       { id: 'genetics', name: 'Genetics and Inheritance' },
       { id: 'evolution', name: 'Evolution by Natural Selection' },
       { id: 'human-impact', name: 'Human Impact on the Environment' },
-      { id: 'exam-skills', name: 'Exam Skills & Application' }
+      { id: 'exam-skills', name: 'Exam Skills & Application' },
+      { id: 'tests', name: 'Tests' }
     ]
   },
   {
@@ -80,7 +84,8 @@ const subjects = [
       { id: 'acids-bases', name: 'Acids and Bases' },
       { id: 'reaction-rates', name: 'Reaction Rates' },
       { id: 'electrochemistry', name: 'Electrochemistry' },
-      { id: 'gas-laws', name: 'Ideal Gases and Gas Laws' }
+      { id: 'gas-laws', name: 'Ideal Gases and Gas Laws' },
+      { id: 'tests', name: 'Tests' }
     ]
   },
   {
@@ -96,7 +101,8 @@ const subjects = [
       { id: 'assets', name: 'Fixed Assets' },
       { id: 'controls', name: 'Internal Controls and Ethics' },
       { id: 'budgeting', name: 'Budgeting' },
-      { id: 'cost', name: 'Cost Accounting' }
+      { id: 'cost', name: 'Cost Accounting' },
+      { id: 'tests', name: 'Tests' }
     ]
   },
   {
@@ -115,7 +121,8 @@ const subjects = [
       { id: 'ethics', name: 'Ethics and Professionalism' },
       { id: 'csr-csi', name: 'CSR and CSI' },
       { id: 'investment', name: 'Investment' },
-      { id: 'presentation', name: 'Presentation Skills' }
+      { id: 'presentation', name: 'Presentation Skills' },
+      { id: 'tests', name: 'Tests' }
     ]
   },
   {
@@ -134,7 +141,8 @@ const subjects = [
       { id: 'population', name: 'Population' },
       { id: 'poverty-inequality', name: 'Poverty and Inequality' },
       { id: 'trade', name: 'Trade' },
-      { id: 'contemporary', name: 'Contemporary Issues' }
+      { id: 'contemporary', name: 'Contemporary Issues' },
+      { id: 'tests', name: 'Tests' }
     ]
   },
   {
@@ -147,7 +155,8 @@ const subjects = [
       { id: 'settlements', name: 'Rural and Urban Settlements' },
       { id: 'economic-geography', name: 'Economic Geography' },
       { id: 'resources', name: 'Resources and Sustainability' },
-      { id: 'mapwork', name: 'Mapwork & GIS' }
+      { id: 'mapwork', name: 'Mapwork & GIS' },
+      { id: 'tests', name: 'Tests' }
     ]
   },
   {
@@ -160,7 +169,8 @@ const subjects = [
       { id: 'civil-protests', name: 'Civil Society Protests' },
       { id: 'sa-crisis', name: 'South Africa 1970s–1980s' },
       { id: 'democracy', name: 'The Coming of Democracy' },
-      { id: 'new-world-order', name: 'New World Order' }
+      { id: 'new-world-order', name: 'New World Order' },
+      { id: 'tests', name: 'Tests' }
     ]
   },
   {
@@ -173,7 +183,8 @@ const subjects = [
       { id: 'democracy', name: 'Democracy and Human Rights' },
       { id: 'careers', name: 'Careers and Career Choices' },
       { id: 'study-skills', name: 'Study Skills' },
-      { id: 'physical-education', name: 'Physical Education' }
+      { id: 'physical-education', name: 'Physical Education' },
+      { id: 'tests', name: 'Tests' }
     ]
   },
   {
@@ -186,7 +197,8 @@ const subjects = [
       { id: 'data-management', name: 'Data Management' },
       { id: 'communication', name: 'Communication and Networks' },
       { id: 'web-design', name: 'Web Design' },
-      { id: 'practical-skills', name: 'Practical Skills' }
+      { id: 'practical-skills', name: 'Practical Skills' },
+      { id: 'tests', name: 'Tests' }
     ]
   },
   {
@@ -199,7 +211,8 @@ const subjects = [
       { id: 'software-dev', name: 'Software Development' },
       { id: 'networks', name: 'Networks' },
       { id: 'security', name: 'Security and Ethics' },
-      { id: 'practical-skills', name: 'Practical Skills' }
+      { id: 'practical-skills', name: 'Practical Skills' },
+      { id: 'tests', name: 'Tests' }
     ]
   },
   {
@@ -214,7 +227,8 @@ const subjects = [
       { id: 'tourism-development', name: 'Tourism Development' },
       { id: 'tourism-management', name: 'Tourism Management' },
       { id: 'tourism-trends', name: 'Tourism Trends' },
-      { id: 'sa-tourism', name: 'Tourism in South Africa' }
+      { id: 'sa-tourism', name: 'Tourism in South Africa' },
+      { id: 'tests', name: 'Tests' }
     ]
   }
 ];
@@ -346,13 +360,48 @@ const problemSets = [
 ];
 
 export default function PracticePage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const [showSignInModal, setShowSignInModal] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState('');
   const [selectedTopic, setSelectedTopic] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState('');
   const [showBookmarked, setShowBookmarked] = useState(false);
   const [bookmarkedSets, setBookmarkedSets] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900">Practice Problems</h1>
+            <p className="mt-2 text-gray-600">Sign in to track your progress and save your work</p>
+            <button
+              onClick={() => setShowSignInModal(true)}
+              className="mt-4 bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Sign In
+            </button>
+          </div>
+        </main>
+        <SignInModal isOpen={showSignInModal} onClose={() => setShowSignInModal(false)} />
+      </div>
+    );
+  }
 
   const handleBookmark = (id: number) => {
     if (user) {

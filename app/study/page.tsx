@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import AuthCheck from '../components/AuthCheck';
 import { useAuth } from '../context/AuthContext';
-import { updateStreak, markTopicCompleted, updateStudyTime } from '../utils/userProgress';
+import { updateStreak, markTopicCompleted, updateStudyTime, markLessonCompleted } from '../utils/userProgress';
 import AlgebraSimplifyingExpressions from '../components/lessons/AlgebraSimplifyingExpressions';
 import AlgebraMultiplyingExpressions from '../components/lessons/AlgebraMultiplyingExpressions';
 import AlgebraFactorisingEquations from '../components/lessons/AlgebraFactorisingEquations';
@@ -30,6 +30,7 @@ import BasicProbabilityRules from '../components/lessons/BasicProbabilityRules';
 import TreeDiagrams from '../components/lessons/TreeDiagrams';
 import VennDiagrams from '../components/lessons/VennDiagrams';
 import IndependentDependentEvents from '../components/lessons/IndependentDependentEvents';
+import StatisticsMeanMedianMode from '../components/lessons/StatisticsMeanMedianMode';
 import { 
   AcademicCapIcon,
   BookOpenIcon,
@@ -45,8 +46,11 @@ import {
   ChartBarIcon as ChartBarIconSolid,
   PencilIcon,
   DocumentCheckIcon,
-  StopIcon
+  StopIcon,
+  ChevronLeftIcon
 } from '@heroicons/react/24/outline';
+import SignInModal from '../components/SignInModal';
+import { getUserProgress } from '../utils/userProgress';
 
 // Mock data for demonstration
 const subjects = [
@@ -1370,42 +1374,90 @@ const subjects = [
 ];
 
 export default function StudyPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showSubjectSelector, setShowSubjectSelector] = useState(true);
-  const [expandedTopics, setExpandedTopics] = useState<{ [key: string]: boolean }>({});
-  const [activeLesson, setActiveLesson] = useState<{ subjectId: string; topicId: string; lessonId: number } | null>(null);
-  const [isEditingNotes, setIsEditingNotes] = useState(false);
-  const [lessonNotes, setLessonNotes] = useState<{ [key: string]: string }>({});
-  const [filter, setFilter] = useState('all');
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [selectedLesson, setSelectedLesson] = useState<number | null>(null);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [timerTime, setTimerTime] = useState(0);
+  const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
+  const [notes, setNotes] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSignInModal, setShowSignInModal] = useState(false);
+  const [showSubjectSelection, setShowSubjectSelection] = useState(true);
+  const [showNotes, setShowNotes] = useState(false);
+  const [userProgress, setUserProgress] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchUserProgress = async () => {
+      if (user) {
+        const progress = await getUserProgress(user.uid);
+        setUserProgress(progress);
+      }
+    };
+    fetchUserProgress();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900">Study Dashboard</h1>
+            <p className="mt-2 text-gray-600">Sign in to track your progress and save your work</p>
+            <button
+              onClick={() => setShowSignInModal(true)}
+              className="mt-4 bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Sign In
+            </button>
+          </div>
+        </main>
+        <SignInModal isOpen={showSignInModal} onClose={() => setShowSignInModal(false)} />
+      </div>
+    );
+  }
 
   const handleSubjectSelect = (subjectId: string) => {
-    setSelectedSubjects(prev =>
-      prev.includes(subjectId)
-        ? prev.filter(id => id !== subjectId)
-        : [...prev, subjectId]
-    );
+    setSelectedSubjects(prev => {
+      if (prev.includes(subjectId)) {
+        return prev.filter(id => id !== subjectId);
+      } else {
+        return [...prev, subjectId];
+      }
+    });
   };
 
-  const handleStartLearning = async () => {
+  const handleStartLearning = () => {
     if (selectedSubjects.length > 0) {
-      setShowSubjectSelector(false);
-      if (user) {
-        await updateStreak(user.uid);
-        setIsTimerRunning(true);
-      }
+      setIsTimerRunning(true);
+      setShowSubjectSelection(false);
+      // Reset topic and lesson selection when starting with new subjects
+      setSelectedTopic(null);
+      setSelectedLesson(null);
     }
   };
 
+  const handleBackToSubjects = () => {
+    setShowSubjectSelection(true);
+  };
+
   const toggleTopic = (topicId: string) => {
-    setExpandedTopics(prev => ({
-      ...prev,
-      [topicId]: !prev[topicId]
-    }));
+    setSelectedTopic(prev => prev === topicId ? null : topicId);
   };
 
   const filteredSubjects = subjects.filter(subject =>
@@ -1413,22 +1465,23 @@ export default function StudyPage() {
   );
 
   const getActiveLessonContent = () => {
-    if (!activeLesson) return null;
+    if (!selectedSubjects.length || !selectedTopic || !selectedLesson) return null;
     
-    const subject = subjects.find(s => s.id === activeLesson.subjectId);
+    // Get the first selected subject for now - we can enhance this later to show content from multiple subjects
+    const subject = subjects.find(s => s.id === selectedSubjects[0]);
     if (!subject) return null;
 
-    const topic = subject.topics.find(t => t.id === activeLesson.topicId);
+    const topic = subject.topics.find(t => t.id === selectedTopic);
     if (!topic) return null;
 
-    const lesson = topic.lessons.find(l => l.id === activeLesson.lessonId);
+    const lesson = topic.lessons.find(l => l.id === selectedLesson);
     if (!lesson) return null;
 
-    switch (activeLesson.subjectId) {
+    switch (selectedSubjects[0]) {
       case 'mathematics':
-        switch (activeLesson.topicId) {
+        switch (selectedTopic) {
           case 'algebra':
-            switch (activeLesson.lessonId) {
+            switch (selectedLesson) {
               case 1: return <AlgebraSimplifyingExpressions />;
               case 2: return <AlgebraMultiplyingExpressions />;
               case 3: return <AlgebraFactorisingEquations />;
@@ -1438,14 +1491,14 @@ export default function StudyPage() {
               default: return null;
             }
           case 'patterns':
-            switch (activeLesson.lessonId) {
+            switch (selectedLesson) {
               case 1: return null; // ArithmeticSequences
               case 2: return null; // GeometricSequences
               case 3: return null; // SigmaNotation
               default: return null;
             }
           case 'functions':
-            switch (activeLesson.lessonId) {
+            switch (selectedLesson) {
               case 1: return <LinearQuadraticFunctions />;
               case 2: return null; // ExponentialHyperbolicFunctions
               case 3: return null; // LogarithmicFunctions
@@ -1454,14 +1507,14 @@ export default function StudyPage() {
               default: return null;
             }
           case 'finance':
-            switch (activeLesson.lessonId) {
+            switch (selectedLesson) {
               case 1: return <FinanceGrowthDecay />;
               case 2: return <DepreciationInflation />;
               case 3: return <AnnuitiesPresentFutureValue />;
               default: return null;
             }
           case 'calculus':
-            switch (activeLesson.lessonId) {
+            switch (selectedLesson) {
               case 1: return <FirstPrinciplesDifferentiation />;
               case 2: return <RulesOfDifferentiation />;
               case 3: return <MaximaAndMinima />;
@@ -1469,11 +1522,19 @@ export default function StudyPage() {
               default: return null;
             }
           case 'probability':
-            switch (activeLesson.lessonId) {
+            switch (selectedLesson) {
               case 1: return <BasicProbabilityRules />;
               case 2: return <TreeDiagrams />;
               case 3: return <VennDiagrams />;
               case 4: return <IndependentDependentEvents />;
+              default: return null;
+            }
+          case 'statistics':
+            switch (selectedLesson) {
+              case 1: return <StatisticsMeanMedianMode />;
+              case 2: return null; // StandardDeviationAndVariance
+              case 3: return null; // BoxAndWhiskerPlots
+              case 4: return null; // HistogramsAndOgivs
               default: return null;
             }
           default:
@@ -1489,28 +1550,35 @@ export default function StudyPage() {
   };
 
   const handleLessonClick = async (subjectId: string, topicId: string, lessonId: number) => {
-    if (user) {
-      await markTopicCompleted(user.uid, subjectId, topicId);
+    if (!user) {
+      // Handle error for unauthenticated user
+      return;
     }
-    setActiveLesson({ subjectId, topicId, lessonId });
+
+    // Start the timer when a lesson is selected
+    if (!isTimerRunning) {
+      handleStartTimer();
+    }
+
+    // Set the active lesson
+    setSelectedLesson(lessonId);
+
+    // Mark the lesson as completed in the database
+    await markLessonCompleted(user.uid, subjectId, topicId, lessonId);
   };
 
   const getFilteredTopics = (subject: typeof subjects[0]) => {
-    if (filter === 'all') {
-      return subject.topics;
-    } else if (filter === 'in-progress') {
-      return subject.topics.filter(topic => topic.progress < 100);
-    } else if (filter === 'completed') {
-      return subject.topics.filter(topic => topic.progress === 100);
-    }
-    return [];
+    if (!searchQuery) return subject.topics;
+    return subject.topics.filter(topic =>
+      topic.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   };
 
   const handleStartTimer = () => {
     if (!isTimerRunning) {
       setIsTimerRunning(true);
       const interval = setInterval(() => {
-        setTimerTime(prev => prev + 1);
+        setTimerSeconds(prev => prev + 1);
       }, 1000);
       setTimerInterval(interval);
     }
@@ -1529,11 +1597,11 @@ export default function StudyPage() {
       clearInterval(timerInterval);
       setTimerInterval(null);
     }
-    if (user && timerTime > 0) {
-      const minutes = Math.ceil(timerTime / 60);
+    if (user && timerSeconds > 0) {
+      const minutes = Math.ceil(timerSeconds / 60);
       await updateStudyTime(user.uid, minutes);
     }
-    setTimerTime(0);
+    setTimerSeconds(0);
     setIsTimerRunning(false);
   };
 
@@ -1544,364 +1612,252 @@ export default function StudyPage() {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
+  const getSubjectProgress = (subjectId: string) => {
+    const subject = userProgress?.subjects[subjectId];
+    if (!subject) return 0;
+    return Math.round(subject.progress);
+  };
+
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
-      <Navbar />
-      
-      <main className="flex-1 flex overflow-hidden">
-        {/* Subject Selection Screen */}
-        {showSubjectSelector ? (
-          <div className="flex-1 flex flex-col p-4">
-            <div className="text-center mb-4">
-              <h1 className="text-2xl font-bold text-gray-900">Choose Your Subjects</h1>
-            </div>
+    <AuthCheck required={true}>
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        
+        <main className="flex-1 flex overflow-hidden">
+          {/* Subject Selection Screen */}
+          {showSubjectSelection ? (
+            <div className="flex-1 p-4">
+              <div className="max-w-7xl mx-auto">
+                <div className="text-center mb-4">
+                  <h1 className="text-2xl font-bold text-gray-900">Choose Your Subjects</h1>
+                  <p className="mt-1 text-sm text-gray-600">Select one or more subjects to start learning</p>
+                </div>
 
-            {/* Search Bar */}
-            <div className="mb-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search subjects..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 pl-10 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-              </div>
-            </div>
-
-            {/* Subject Grid */}
-            <div className="flex-1 grid grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto">
-              {subjects.map((subject) => (
-                <div
-                  key={subject.id}
-                  onClick={() => handleSubjectSelect(subject.id)}
-                  className={`group relative bg-white rounded-lg p-4 cursor-pointer transition-all ${
-                    selectedSubjects.includes(subject.id)
-                      ? 'ring-2 ring-blue-500 shadow-md'
-                      : 'hover:shadow-md'
-                  }`}
-                >
-                  <div className="flex items-start space-x-3">
-                    <div className={`p-2 rounded-lg ${
-                      selectedSubjects.includes(subject.id)
-                        ? 'bg-blue-100'
-                        : 'bg-gray-100 group-hover:bg-blue-50'
-                    }`}>
-                      <span className="text-xl">{subject.icon}</span>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-base font-semibold text-gray-900">{subject.name}</h3>
-                      <p className="text-xs text-gray-500">{subject.description}</p>
-                    </div>
-                    {selectedSubjects.includes(subject.id) ? (
-                      <div className="absolute top-2 right-2">
-                        <div className="bg-blue-500 text-white rounded-full p-1">
-                          <CheckCircleIcon className="h-4 w-4" />
-                        </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {subjects.map((subject) => (
+                    <div
+                      key={subject.id}
+                      className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 cursor-pointer ${
+                        selectedSubjects.includes(subject.id) ? 'ring-2 ring-blue-500' : ''
+                      }`}
+                      onClick={() => handleSubjectSelect(subject.id)}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-lg">{subject.icon}</span>
+                        <h3 className="font-medium text-sm">{subject.name}</h3>
                       </div>
-                    ) : (
-                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <ChevronRightIcon className="h-4 w-4 text-gray-400" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Selection Summary and Start Button */}
-            <div className="mt-4 bg-white border-t border-gray-200 p-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-500">
-                    {selectedSubjects.length} subject{selectedSubjects.length !== 1 ? 's' : ''} selected
-                  </p>
-                  <p className="text-sm font-medium text-gray-900">
-                    {selectedSubjects.length > 0
-                      ? subjects
-                          .filter(s => selectedSubjects.includes(s.id))
-                          .map(s => s.name)
-                          .join(', ')
-                      : 'No subjects selected'}
-                  </p>
-                </div>
-                <AuthCheck required={true}>
-                  <button
-                    onClick={handleStartLearning}
-                    disabled={selectedSubjects.length === 0}
-                    className={`px-6 py-2 rounded-lg text-white font-medium flex items-center space-x-2 ${
-                      selectedSubjects.length === 0
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-blue-600 hover:bg-blue-700'
-                    }`}
-                  >
-                    <span>Start Learning</span>
-                    <ArrowRightIcon className="h-4 w-4" />
-                  </button>
-                </AuthCheck>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex-1 flex">
-            {/* Sidebar with Subjects */}
-            <div className="w-48 bg-white border-r border-gray-200 flex flex-col">
-              <div className="p-3 border-b border-gray-200">
-                <h2 className="text-sm font-semibold text-gray-900">Subjects</h2>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                {filteredSubjects.map((subject) => (
-                  <div
-                    key={subject.id}
-                    className="p-2 border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <span className="text-lg">{subject.icon}</span>
-                      <span className="text-xs font-medium text-gray-900">{subject.name}</span>
-                    </div>
-                    <div className="mt-1">
-                      <div className="h-1 bg-gray-200 rounded-full">
-                        <div
-                          className="h-full bg-blue-600 rounded-full"
-                          style={{ width: `${subject.progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Main Content Area */}
-            <div className="w-96 flex flex-col">
-              {/* Header */}
-              <div className="p-3 border-b border-gray-200 flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <h1 className="text-sm font-bold text-gray-900">Topics</h1>
-                  <button
-                    onClick={() => setShowSubjectSelector(true)}
-                    className="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-xs"
-                  >
-                    Change
-                  </button>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-32 px-2 py-1 pl-8 text-xs rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <MagnifyingGlassIcon className="h-4 w-4 text-gray-400 absolute left-2 top-1/2 transform -translate-y-1/2" />
-                  </div>
-                  <select
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value as any)}
-                    className="px-2 py-1 text-xs rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="all">All</option>
-                    <option value="in-progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Topics and Lessons */}
-              <div className="flex-1 overflow-y-auto">
-                {filteredSubjects.map((subject) => (
-                  <div key={subject.id} className="p-2">
-                    <div className="mb-2 flex items-center justify-between">
-                      <h2 className="text-xs font-semibold text-gray-900 flex items-center">
-                        <span className="text-sm mr-1">{subject.icon}</span>
-                        {subject.name}
-                      </h2>
-                      <div className="flex items-center space-x-1">
+                      <p className="text-xs text-gray-600 mb-2 line-clamp-2">{subject.description}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500">
+                          {getSubjectProgress(subject.id)}% Complete
+                        </span>
                         <div className="w-16 h-1 bg-gray-200 rounded-full">
                           <div
-                            className="h-full bg-blue-600 rounded-full"
-                            style={{ width: `${subject.progress}%` }}
+                            className="h-1 bg-blue-500 rounded-full"
+                            style={{ width: `${getSubjectProgress(subject.id)}%` }}
                           />
                         </div>
-                        <span className="text-xs font-medium text-gray-900">{Math.round(subject.progress)}%</span>
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      {getFilteredTopics(subject).map((topic) => (
-                        <div key={topic.id} className="bg-white rounded-lg shadow-sm">
-                          <button
-                            onClick={() => toggleTopic(topic.id)}
-                            className="w-full p-2 flex items-center justify-between text-left hover:bg-gray-50 rounded-t-lg"
-                          >
-                            <div className="flex items-center space-x-2">
-                              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <span className="text-blue-600 font-semibold text-xs">{Math.round(topic.progress)}%</span>
-                              </div>
-                              <div>
-                                <h3 className="text-xs font-semibold text-gray-900">{topic.name}</h3>
-                                <p className="text-xs text-gray-500">
-                                  {topic.lessons.filter(l => l.completed).length}/{topic.lessons.length}
-                                </p>
-                              </div>
-                            </div>
-                            {expandedTopics[topic.id] ? (
-                              <ChevronDownIcon className="h-4 w-4 text-gray-400" />
-                            ) : (
-                              <ChevronRightIcon className="h-4 w-4 text-gray-400" />
-                            )}
-                          </button>
+                  ))}
+                </div>
 
-                          {expandedTopics[topic.id] && (
-                            <div className="border-t border-gray-100">
-                              {topic.lessons.map((lesson) => (
-                                <div
-                                  key={lesson.id}
-                                  className="flex items-center justify-between p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                                  onClick={() => {
-                                    handleLessonClick(subject.id, topic.id, lesson.id);
-                                    setActiveLesson({ subjectId: subject.id, topicId: topic.id, lessonId: lesson.id });
-                                  }}
-                                >
-                                  <div className="flex items-center space-x-2">
-                                    <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                                      lesson.completed ? 'bg-green-100' : 'bg-gray-100'
-                                    }`}>
-                                      {lesson.completed ? (
-                                        <CheckCircleIcon className="h-3 w-3 text-green-500" />
-                                      ) : (
-                                        <PlayIcon className="h-3 w-3 text-blue-500" />
-                                      )}
+                {selectedSubjects.length > 0 && (
+                  <div className="mt-4 text-center">
+                    <button
+                      onClick={handleStartLearning}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors inline-flex items-center space-x-2 text-sm"
+                    >
+                      <span>Start Studying {selectedSubjects.length} Subject{selectedSubjects.length > 1 ? 's' : ''}</span>
+                      <ArrowRightIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col p-4">
+              {/* Back Button */}
+              <div className="mb-4">
+                <button
+                  onClick={handleBackToSubjects}
+                  className="flex items-center text-gray-600 hover:text-gray-900"
+                >
+                  <ChevronLeftIcon className="h-5 w-5 mr-1" />
+                  Back to Subject Selection
+                </button>
+              </div>
+
+              {/* Topic and Lesson Selection */}
+              <div className="flex-1 flex h-[calc(100vh-12rem)]">
+                {/* First Column: Selected Subjects */}
+                <div className="w-64 bg-white shadow-sm p-4 overflow-y-auto border-r border-gray-200">
+                  <h3 className="font-semibold text-gray-900 mb-4">Your Subjects</h3>
+                  <div className="space-y-2">
+                    {subjects
+                      .filter(subject => selectedSubjects.includes(subject.id))
+                      .map(subject => (
+                        <button
+                          key={subject.id}
+                          onClick={() => setSelectedTopic(null)}
+                          className="w-full text-left p-3 hover:bg-gray-50 rounded-md flex items-center space-x-3"
+                        >
+                          <span className="text-2xl">{subject.icon}</span>
+                          <div>
+                            <h4 className="font-medium text-gray-900">{subject.name}</h4>
+                            <p className="text-sm text-gray-500">{subject.progress}% Complete</p>
+                          </div>
+                        </button>
+                      ))}
+                  </div>
+                </div>
+
+                {/* Second Column: Topics and Lessons */}
+                <div className="w-80 bg-white shadow-sm p-4 overflow-y-auto border-r border-gray-200">
+                  {selectedSubjects.length > 0 ? (
+                    <div>
+                      <div className="mb-4">
+                        <input
+                          type="text"
+                          placeholder="Search topics..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-md"
+                        />
+                      </div>
+                      <div className="space-y-4">
+                        {subjects
+                          .filter(subject => selectedSubjects.includes(subject.id))
+                          .map(subject => (
+                            <div key={subject.id} className="mb-6">
+                              <h3 className="font-semibold text-gray-900 mb-2">{subject.name}</h3>
+                              {getFilteredTopics(subject).map((topic) => (
+                                <div key={topic.id} className="mb-4">
+                                  <button
+                                    onClick={() => toggleTopic(topic.id)}
+                                    className="w-full text-left p-2 hover:bg-gray-50 rounded-md flex items-center justify-between"
+                                  >
+                                    <span>{topic.name}</span>
+                                    {selectedTopic === topic.id ? (
+                                      <ChevronDownIcon className="h-5 w-5" />
+                                    ) : (
+                                      <ChevronRightIcon className="h-5 w-5" />
+                                    )}
+                                  </button>
+                                  {selectedTopic === topic.id && (
+                                    <div className="ml-4 mt-2 space-y-1">
+                                      {topic.lessons.map((lesson) => (
+                                        <button
+                                          key={lesson.id}
+                                          onClick={() => handleLessonClick(
+                                            subject.id,
+                                            topic.id,
+                                            lesson.id
+                                          )}
+                                          className={`w-full text-left p-2 rounded-md flex items-center space-x-2 ${
+                                            selectedLesson === lesson.id ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'
+                                          }`}
+                                        >
+                                          {lesson.completed ? (
+                                            <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                                          ) : (
+                                            <DocumentCheckIcon className="h-5 w-5 text-gray-400" />
+                                          )}
+                                          <span>{lesson.title}</span>
+                                        </button>
+                                      ))}
                                     </div>
-                                    <span className="text-xs text-gray-600">{lesson.title}</span>
-                                  </div>
-                                  <span className="text-xs text-gray-500">
-                                    {lesson.completed ? 'Done' : 'Start'}
-                                  </span>
+                                  )}
                                 </div>
                               ))}
                             </div>
-                          )}
-                        </div>
-                      ))}
+                          ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ) : (
+                    <div className="text-center py-12">
+                      <h3 className="text-gray-900 font-medium">No Subjects Selected</h3>
+                      <p className="text-gray-500 mt-1">Select subjects from the left panel</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Third Column: Lesson Content and Notes */}
+                <div className="flex-1 bg-white shadow-sm p-6 overflow-y-auto">
+                  {selectedLesson ? (
+                    <div className="flex flex-col h-full">
+                      {/* Header with Title, Timer, and Notes Icon */}
+                      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+                        <div className="flex items-center space-x-4">
+                          <h2 className="text-2xl font-bold text-gray-900">
+                            {subjects
+                              .filter(subject => selectedSubjects.includes(subject.id))
+                              .flatMap(subject => subject.topics)
+                              .find(topic => topic.id === selectedTopic)
+                              ?.lessons.find(lesson => lesson.id === selectedLesson)?.title}
+                          </h2>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                          <div className="flex items-center space-x-2">
+                            <ClockIcon className="h-5 w-5 text-gray-500" />
+                            <span className="text-lg font-mono">{formatTime(timerSeconds)}</span>
+                          </div>
+                          <button
+                            onClick={() => setShowNotes(!showNotes)}
+                            className={`p-2 rounded-md transition-colors ${
+                              showNotes 
+                                ? 'bg-blue-100 text-blue-600' 
+                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                            }`}
+                          >
+                            <PencilIcon className="h-5 w-5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Main Content Area */}
+                      <div className="flex-1 flex gap-6">
+                        {/* Lesson Content */}
+                        <div className={`${showNotes ? 'w-2/3' : 'w-full'} transition-all duration-300`}>
+                          {getActiveLessonContent()}
+                        </div>
+
+                        {/* Notes Panel */}
+                        {showNotes && (
+                          <div className="w-1/3 border-l border-gray-200 pl-6 transition-all duration-300">
+                            <div className="sticky top-0 bg-white pb-4">
+                              <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold text-gray-900">Notes</h3>
+                                <button
+                                  onClick={handleSaveNotes}
+                                  className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
+                                >
+                                  Save
+                                </button>
+                              </div>
+                              <textarea
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                placeholder="Take notes here..."
+                                className="w-full h-[calc(100vh-20rem)] p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <h2 className="text-2xl font-semibold text-gray-900">Select a Lesson</h2>
+                      <p className="mt-2 text-gray-600">Choose a lesson from the middle panel to start learning</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-
-            {/* Lesson Content and Notes */}
-            {activeLesson && (
-              <div className="flex-1 bg-white border-l border-gray-200 flex flex-col">
-                <div className="p-4 border-b border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-lg font-semibold text-gray-900">
-                        {subjects.find(s => s.id === activeLesson.subjectId)?.topics.find(t => t.id === activeLesson.topicId)?.name}
-                      </h2>
-                      <p className="text-sm text-gray-600">
-                        {subjects.find(s => s.id === activeLesson.subjectId)?.topics.find(t => t.id === activeLesson.topicId)?.lessons.find(l => l.id === activeLesson.lessonId)?.title}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <button 
-                        onClick={() => {/* TODO: Implement quiz functionality */}}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
-                      >
-                        <AcademicCapIcon className="h-5 w-5" />
-                        <span>Take Quiz</span>
-                      </button>
-                      <div className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg">
-                        <ClockIcon className="h-5 w-5 text-gray-600" />
-                        <span className="text-sm font-medium text-gray-900">{formatTime(timerTime)}</span>
-                      </div>
-                      <button 
-                        onClick={handleStartTimer}
-                        disabled={isTimerRunning}
-                        className={`p-2 text-gray-600 hover:bg-gray-100 rounded-lg ${isTimerRunning ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        <PlayIcon className="h-5 w-5" />
-                      </button>
-                      <button 
-                        onClick={handlePauseTimer}
-                        disabled={!isTimerRunning}
-                        className={`p-2 text-gray-600 hover:bg-gray-100 rounded-lg ${!isTimerRunning ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        <PauseIcon className="h-5 w-5" />
-                      </button>
-                      <button 
-                        onClick={handleStopTimer}
-                        disabled={!isTimerRunning && timerTime === 0}
-                        className={`p-2 text-gray-600 hover:bg-gray-100 rounded-lg ${!isTimerRunning && timerTime === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        <StopIcon className="h-5 w-5" />
-                      </button>
-                      <button 
-                        onClick={() => setIsEditingNotes(!isEditingNotes)}
-                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                      >
-                        <PencilIcon className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex-1 overflow-y-auto">
-                  {/* Lesson Content Section */}
-                  <div className="p-4 border-b border-gray-200 flex-1">
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Lesson Content</h3>
-                    <div className="bg-gray-50 rounded-lg p-4 min-h-[400px]">
-                      {getActiveLessonContent() || (
-                        <p className="text-gray-600">
-                          No content available for this lesson yet. Content will be added soon.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Notes Section */}
-                  <div className="p-4 flex-none">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-sm font-medium text-gray-500">Your Notes</h3>
-                      <button
-                        onClick={() => setIsEditingNotes(!isEditingNotes)}
-                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                      >
-                        <PencilIcon className="h-5 w-5" />
-                      </button>
-                    </div>
-                    {isEditingNotes ? (
-                      <div className="space-y-2">
-                        <textarea
-                          value={lessonNotes[`${activeLesson.subjectId}-${activeLesson.topicId}-${activeLesson.lessonId}`] || ''}
-                          onChange={(e) => setLessonNotes(prev => ({
-                            ...prev,
-                            [`${activeLesson.subjectId}-${activeLesson.topicId}-${activeLesson.lessonId}`]: e.target.value
-                          }))}
-                          className="w-full h-48 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Take your notes here..."
-                        />
-                        <button
-                          onClick={handleSaveNotes}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
-                        >
-                          <DocumentCheckIcon className="h-4 w-4" />
-                          <span>Save Notes</span>
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="p-4 bg-gray-50 rounded-lg min-h-[12rem]">
-                        {lessonNotes[`${activeLesson.subjectId}-${activeLesson.topicId}-${activeLesson.lessonId}`] || 'No notes yet. Click the pencil icon to add notes.'}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </main>
-    </div>
+          )}
+        </main>
+      </div>
+    </AuthCheck>
   );
 } 

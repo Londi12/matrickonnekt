@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import AuthCheck from '../components/AuthCheck';
 import { useAuth } from '../context/AuthContext';
@@ -22,8 +22,44 @@ import {
   UserGroupIcon,
   MapIcon,
   BookmarkIcon,
-  VideoCameraIcon
+  VideoCameraIcon,
+  CloudArrowUpIcon
 } from '@heroicons/react/24/outline';
+import { useDropzone } from 'react-dropzone';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../firebase/config';
+import { toast } from 'react-hot-toast';
+import SignInModal from '../components/SignInModal';
+
+interface FileMetadata {
+  title: string;
+  description: string;
+  subject: string;
+  category: string;
+}
+
+interface FileWithPreview extends File {
+  preview?: string;
+  metadata?: FileMetadata;
+}
+
+interface Resource {
+  id: string;
+  title: string;
+  description: string;
+  subject: string;
+  category: string;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  downloadUrl: string;
+  uploadedBy: string;
+  uploadedByName: string;
+  uploadedAt: any;
+  approved: boolean;
+  status: string;
+}
 
 // Mock data for demonstration
 const resources = {
@@ -69,7 +105,7 @@ const resources = {
       title: 'Economics Past Papers',
       description: 'Collection of past examination papers with solutions',
       subject: 'Economics',
-      category: 'Practice',
+      category: 'Past Papers',
       size: '4.5 MB',
       downloadUrl: '#'
     },
@@ -125,6 +161,24 @@ const resources = {
       subject: 'Tourism',
       category: 'Reference',
       size: '2.9 MB',
+      downloadUrl: '#'
+    },
+    {
+      id: 12,
+      title: 'English Home Language Past Papers',
+      description: 'Collection of past examination papers with marking guidelines',
+      subject: 'English Home Language',
+      category: 'Past Papers',
+      size: '3.8 MB',
+      downloadUrl: '#'
+    },
+    {
+      id: 13,
+      title: 'English Home Language Study Guide',
+      description: 'Comprehensive guide to literature analysis and essay writing',
+      subject: 'English Home Language',
+      category: 'Study Guide',
+      size: '2.6 MB',
       downloadUrl: '#'
     }
   ],
@@ -279,36 +333,201 @@ const resources = {
 };
 
 export default function ResourcesPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const [showSignInModal, setShowSignInModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('pdfs');
+  const [activeTab, setActiveTab] = useState('all');
   const [selectedSubject, setSelectedSubject] = useState('');
+  const [files, setFiles] = useState<FileWithPreview[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [editingFileIndex, setEditingFileIndex] = useState<number | null>(null);
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [filter, setFilter] = useState('all'); // 'all', 'notes', 'past_papers', 'worksheets'
 
-  const handleDownload = async (resource: typeof resources.pdfs[0]) => {
-    if (user) {
-      await recordQuizCompletion(user.uid, resource.subject, 0);
+  useEffect(() => {
+    fetchResources();
+  }, []);
+
+  const fetchResources = async () => {
+    try {
+      const resourcesRef = collection(db, 'resources');
+      const q = query(resourcesRef, where('approved', '==', true));
+      const querySnapshot = await getDocs(q);
+      
+      const resourcesData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Resource[];
+      
+      setResources(resourcesData);
+    } catch (error) {
+      console.error('Error fetching resources:', error);
+      toast.error('Failed to fetch resources');
     }
   };
 
-  const filteredGlossary = resources.glossary.filter(item =>
-    (item.term.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.definition.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    (!selectedSubject || item.subject === selectedSubject)
-  );
+  const handleDownload = async (resource: Resource) => {
+    try {
+      if (user) {
+        // Record the download
+        // You can add analytics or tracking here
+        window.open(resource.downloadUrl, '_blank');
+      } else {
+        toast.error('Please sign in to download resources');
+      }
+    } catch (error) {
+      console.error('Error downloading resource:', error);
+      toast.error('Failed to download resource');
+    }
+  };
 
-  const filteredFAQ = resources.faq.filter(item =>
-    (item.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.answer.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    (!selectedSubject || item.subject === selectedSubject)
-  );
+  const filteredResources = filter === 'all' 
+    ? resources 
+    : resources.filter(resource => resource.category === filter);
 
-  const filteredPDFs = resources.pdfs.filter(item =>
-    (!selectedSubject || item.subject === selectedSubject)
-  );
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    setFiles(prevFiles => [...prevFiles, ...acceptedFiles]);
+  }, []);
 
-  const filteredLinks = resources.externalLinks.filter(item =>
-    (!selectedSubject || item.subject === selectedSubject || item.subject === 'All Subjects')
-  );
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/pdf': ['.pdf'],
+      'video/*': ['.mp4', '.mov', '.avi'],
+      'application/msword': ['.doc', '.docx'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+    }
+  });
+
+  const handleMetadataChange = (index: number, field: keyof FileMetadata, value: string) => {
+    setFiles(prevFiles => {
+      const newFiles = [...prevFiles];
+      const currentFile = newFiles[index];
+      
+      if (!currentFile.metadata) {
+        currentFile.metadata = {
+          title: '',
+          description: '',
+          subject: '',
+          category: ''
+        };
+      }
+      
+      if (currentFile.metadata) {
+        currentFile.metadata[field] = value;
+      }
+      
+      return newFiles;
+    });
+  };
+
+  const validateMetadata = (file: FileWithPreview) => {
+    return file.metadata?.title && 
+           file.metadata?.description && 
+           file.metadata?.subject && 
+           file.metadata?.category;
+  };
+
+  const handleUpload = async () => {
+    const invalidFiles = files.filter(file => !validateMetadata(file));
+    if (invalidFiles.length > 0) {
+      toast.error('Please fill in all required fields for each file before uploading.');
+      return;
+    }
+
+    setUploading(true);
+    const storage = getStorage();
+    const uploadPromises = files.map(async (file) => {
+      try {
+        const timestamp = Date.now();
+        const fileName = `${timestamp}_${file.name}`;
+        const filePath = `resources/${file.metadata?.subject}/${fileName}`;
+        
+        const storageRef = ref(storage, filePath);
+        await uploadBytes(storageRef, file);
+        
+        const downloadUrl = await getDownloadURL(storageRef);
+        
+        const resourceData = {
+          title: file.metadata?.title,
+          description: file.metadata?.description,
+          subject: file.metadata?.subject,
+          category: file.metadata?.category,
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          downloadUrl,
+          uploadedBy: user?.uid,
+          uploadedAt: serverTimestamp(),
+          approved: false,
+          status: 'pending',
+          uploadedByName: user?.displayName || 'Anonymous',
+        };
+
+        await addDoc(collection(db, 'resources'), resourceData);
+        return { success: true, fileName: file.name };
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        return { success: false, fileName: file.name, error };
+      }
+    });
+
+    try {
+      const results = await Promise.all(uploadPromises);
+      const failedUploads = results.filter(result => !result.success);
+      
+      if (failedUploads.length > 0) {
+        toast.error(`Failed to upload ${failedUploads.length} file(s). Please try again.`);
+      } else {
+        toast.success('Files uploaded successfully! They will be available after admin approval.');
+        setFiles([]);
+      }
+    } catch (error) {
+      console.error('Error during upload:', error);
+      toast.error('An error occurred during upload. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900">Learning Resources</h1>
+            <p className="mt-2 text-gray-600">Sign in to access and share learning resources</p>
+            <button
+              onClick={() => setShowSignInModal(true)}
+              className="mt-4 bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Sign In
+            </button>
+          </div>
+        </main>
+        <SignInModal isOpen={showSignInModal} onClose={() => setShowSignInModal(false)} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -351,8 +570,150 @@ export default function ResourcesPage() {
               <option value="Computer Applications Technology">Computer Applications Technology</option>
               <option value="Information Technology">Information Technology</option>
               <option value="Tourism">Tourism</option>
+              <option value="English Home Language">English Home Language</option>
             </select>
           </div>
+        </div>
+
+        {/* Upload Section */}
+        <div className="mb-8">
+          <div
+            {...getRootProps()}
+            className={`p-8 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors
+              ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:bg-gray-50'}`}
+          >
+            <input {...getInputProps()} />
+            <CloudArrowUpIcon className="mx-auto h-12 w-12 text-blue-500 mb-4" />
+            <h3 className="text-lg font-medium mb-2">
+              {isDragActive
+                ? 'Drop the files here...'
+                : 'Drag and drop files here, or click to select files'}
+            </h3>
+            <p className="text-sm text-gray-500">
+              Supported formats: PDF, DOC, DOCX, MP4, MOV, AVI
+            </p>
+          </div>
+
+          {files.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-lg font-medium mb-4">Selected Files</h3>
+              <div className="grid grid-cols-1 gap-4">
+                {files.map((file, index) => (
+                  <div
+                    key={index}
+                    className="p-4 bg-white rounded-lg shadow-sm"
+                  >
+                    <div className="flex items-center space-x-4 mb-4">
+                      <DocumentArrowDownIcon className="h-6 w-6 text-gray-400" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {file.name}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setEditingFileIndex(editingFileIndex === index ? null : index)}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        {editingFileIndex === index ? 'Done' : 'Edit Details'}
+                      </button>
+                    </div>
+
+                    {editingFileIndex === index && (
+                      <div className="mt-4 space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Title *</label>
+                          <input
+                            type="text"
+                            value={file.metadata?.title || ''}
+                            onChange={(e) => handleMetadataChange(index, 'title', e.target.value)}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            placeholder="Enter resource title"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Description *</label>
+                          <textarea
+                            value={file.metadata?.description || ''}
+                            onChange={(e) => handleMetadataChange(index, 'description', e.target.value)}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            rows={3}
+                            placeholder="Describe the resource"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Subject *</label>
+                            <select
+                              value={file.metadata?.subject || ''}
+                              onChange={(e) => handleMetadataChange(index, 'subject', e.target.value)}
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            >
+                              <option value="">Select Subject</option>
+                              <option value="Mathematics">Mathematics</option>
+                              <option value="Physical Sciences">Physical Sciences</option>
+                              <option value="Life Sciences">Life Sciences</option>
+                              <option value="Business Studies">Business Studies</option>
+                              <option value="Economics">Economics</option>
+                              <option value="Geography">Geography</option>
+                              <option value="History">History</option>
+                              <option value="Life Orientation">Life Orientation</option>
+                              <option value="Computer Applications Technology">Computer Applications Technology</option>
+                              <option value="Information Technology">Information Technology</option>
+                              <option value="Tourism">Tourism</option>
+                              <option value="English Home Language">English Home Language</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Category *</label>
+                            <select
+                              value={file.metadata?.category || ''}
+                              onChange={(e) => handleMetadataChange(index, 'category', e.target.value)}
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            >
+                              <option value="">Select Category</option>
+                              <option value="Study Guide">Study Guide</option>
+                              <option value="Practice">Practice</option>
+                              <option value="Reference">Reference</option>
+                              <option value="Tools">Tools</option>
+                              <option value="Learning">Learning</option>
+                              <option value="Past Papers">Past Papers</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={handleUpload}
+                disabled={uploading || files.some(file => !validateMetadata(file))}
+                className={`mt-4 px-4 py-2 rounded-md text-white font-medium
+                  ${uploading || files.some(file => !validateMetadata(file)) 
+                    ? 'bg-blue-400 cursor-not-allowed' 
+                    : 'bg-blue-500 hover:bg-blue-600'}
+                  flex items-center space-x-2`}
+              >
+                {uploading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Uploading...</span>
+                  </>
+                ) : (
+                  <>
+                    <CloudArrowUpIcon className="h-5 w-5" />
+                    <span>Upload Resources</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Tabs */}
@@ -403,100 +764,43 @@ export default function ResourcesPage() {
           </button>
         </div>
 
-        {/* Content Sections */}
+        {/* Resources Display Section */}
         <div className="bg-white rounded-lg shadow-sm p-6">
-          {/* PDFs Section */}
-          {activeTab === 'pdfs' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPDFs.map((pdf) => (
-                <AuthCheck key={pdf.id} required={true}>
-                  <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{pdf.title}</h3>
-                        <p className="text-sm text-gray-500 mt-1">{pdf.description}</p>
-                        <div className="flex items-center mt-2 space-x-2">
-                          <span className="text-sm text-gray-400">{pdf.size}</span>
-                          <span className="text-sm text-blue-600">{pdf.subject}</span>
-                        </div>
-                      </div>
-                      <DocumentArrowDownIcon className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <button 
-                      onClick={() => handleDownload(pdf)}
-                      className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                    >
-                      Download
-                    </button>
-                  </div>
-                </AuthCheck>
-              ))}
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading resources...</p>
             </div>
-          )}
-
-          {/* External Links Section */}
-          {activeTab === 'links' && (
+          ) : filteredResources.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-600">No resources found.</p>
+            </div>
+          ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredLinks.map((link) => (
-                <a
-                  key={link.id}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="border rounded-lg p-4 hover:shadow-md transition-shadow block"
+              {filteredResources.map((resource) => (
+                <div
+                  key={resource.id}
+                  className="border rounded-lg p-6 hover:shadow-md transition-shadow"
                 >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{link.title}</h3>
-                      <p className="text-sm text-gray-500 mt-1">{link.description}</p>
-                      <div className="flex items-center mt-2 space-x-2">
-                        <span className="text-sm text-blue-600">{link.subject}</span>
-                        <span className="text-sm text-gray-400">{link.category}</span>
-                      </div>
-                    </div>
-                    <LinkIcon className="h-6 w-6 text-blue-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">{resource.title}</h3>
+                  <p className="text-sm text-gray-500 mt-1">{resource.description}</p>
+                  <div className="mt-2 space-y-1">
+                    <p className="text-sm">
+                      <span className="font-medium">Subject:</span> {resource.subject}
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium">Category:</span> {resource.category}
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium">File:</span> {resource.fileName} ({(resource.fileSize / 1024 / 1024).toFixed(2)} MB)
+                    </p>
                   </div>
-                </a>
-              ))}
-            </div>
-          )}
-
-          {/* Glossary Section */}
-          {activeTab === 'glossary' && (
-            <div className="space-y-6">
-              {filteredGlossary.map((item, index) => (
-                <div key={index} className="border-b pb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">{item.term}</h3>
-                  <p className="text-gray-600 mt-1">{item.definition}</p>
-                  <p className="text-sm text-gray-500 mt-2">Example: {item.example}</p>
-                  <div className="flex items-center mt-2 space-x-2">
-                    <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                      {item.subject}
-                    </span>
-                    <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
-                      {item.category}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* FAQ Section */}
-          {activeTab === 'faq' && (
-            <div className="space-y-6">
-              {filteredFAQ.map((item, index) => (
-                <div key={index} className="border-b pb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">{item.question}</h3>
-                  <p className="text-gray-600 mt-1">{item.answer}</p>
-                  <div className="flex items-center mt-2 space-x-2">
-                    <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                      {item.subject}
-                    </span>
-                    <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
-                      {item.category}
-                    </span>
-                  </div>
+                  <button
+                    onClick={() => handleDownload(resource)}
+                    className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    Download
+                  </button>
                 </div>
               ))}
             </div>

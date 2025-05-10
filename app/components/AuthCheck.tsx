@@ -40,9 +40,9 @@ export default function AuthCheck({
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Sign in Required</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Welcome to Matrickonnekt!</h2>
           <p className="text-gray-600 mb-6">
-            Please sign in to access this feature and track your progress.
+            I'm sorry, looks like you are not signed in. Sign in to get started on your interactive learning journey.
           </p>
           <div className="flex space-x-4">
             <button
