@@ -1,11 +1,9 @@
 import { User } from '../types/auth';
 import { checkNeedsMigration, migrateUserData } from './migrationUtils';
-import { getUserProgress } from './firebase';  // The original Firebase file
-import * as localData from './localData';      // Our new local implementation
+import { getUserProgress } from '../services/userDataService';
 
 /**
  * Initialize app with local authentication
- * This helps with migrating data from Firebase to local storage
  */
 export async function initializeLocalAuth() {
   console.log('Initializing local authentication...');
@@ -23,12 +21,12 @@ export async function initializeLocalAuth() {
     if (needsMigration) {
       console.log(`Migrating data for user ${currentUser.uid}`);
       
-      // Fetch data from Firebase
-      const firebaseData = await getUserProgress(currentUser.uid);
+      // Fetch data from local storage
+      const userData = await getUserProgress(currentUser.uid);
       
-      // Migrate to local storage
-      if (firebaseData) {
-        await migrateUserData(currentUser.uid, firebaseData);
+      // Migrate to new format if needed
+      if (userData) {
+        await migrateUserData(currentUser.uid, userData);
         console.log('Migration complete');
       }
     }
@@ -36,13 +34,3 @@ export async function initializeLocalAuth() {
     console.error('Error during local auth initialization:', error);
   }
 }
-
-/**
- * Replace Firebase imports with local data equivalents
- * This is just for reference, as you'd actually need to replace the imports in the files
- */
-export const replacementMap = {
-  'firebase/auth': '../services/authService',
-  'firebase/firestore': '../utils/localData',
-  '../firebase/config': '../config/localConfig'
-};
