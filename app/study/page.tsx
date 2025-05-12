@@ -1,13 +1,33 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/Navbar';
 import AuthCheck from '../components/AuthCheck';
 import { useAuth } from '../context/AuthContext';
 import { updateStreak, markTopicCompleted, updateStudyTime, markLessonCompleted } from '../utils/userProgress';
 import { updatedSubjects } from '../data/updatedSubjects';
 import CurriculumDemoSection from '../components/CurriculumDemoSection';
-// Import all lesson components
+import MobileResponsiveTabs from '../components/MobileResponsiveTabs';
+import {
+  AcademicCapIcon,
+  BookOpenIcon,
+  ChartBarIcon,
+  ClockIcon,
+  ArrowRightIcon,
+  CheckCircleIcon,
+  MagnifyingGlassIcon,
+  ChevronRightIcon,
+  ChevronDownIcon,
+  PlayIcon,
+  PauseIcon,
+  ChartBarIcon as ChartBarIconSolid,
+  PencilIcon,
+  DocumentCheckIcon,
+  StopIcon,
+  ChevronLeftIcon
+} from '@heroicons/react/24/outline';
+import SignInModal from '../components/SignInModal';
+import { getUserProgress } from '../utils/userProgress';
 import AlgebraPolynomialEquations from '../components/lessons/AlgebraPolynomialEquations';
 import AlgebraSimplifyingExpressions from '../components/lessons/AlgebraSimplifyingExpressions';
 import AlgebraMultiplyingExpressions from '../components/lessons/AlgebraMultiplyingExpressions';
@@ -44,26 +64,6 @@ import VisualLiteracy from '../components/lessons/VisualLiteracy';
 import CreativeWriting from '../components/lessons/CreativeWriting';
 import ArgumentativeWriting from '../components/lessons/ArgumentativeWriting';
 import TransactionalWriting from '../components/lessons/TransactionalWriting';
-import { 
-  AcademicCapIcon,
-  BookOpenIcon,
-  ChartBarIcon,
-  ClockIcon,
-  ArrowRightIcon,
-  CheckCircleIcon,
-  MagnifyingGlassIcon,
-  ChevronRightIcon,
-  ChevronDownIcon,
-  PlayIcon,
-  PauseIcon,
-  ChartBarIcon as ChartBarIconSolid,
-  PencilIcon,
-  DocumentCheckIcon,
-  StopIcon,
-  ChevronLeftIcon
-} from '@heroicons/react/24/outline';
-import SignInModal from '../components/SignInModal';
-import { getUserProgress } from '../utils/userProgress';
 
 interface Lesson {
   id: string;
@@ -88,7 +88,6 @@ interface Subject {
   topics: Topic[];
 }
 
-// Transform the subject modules to match the existing structure for compatibility
 const subjects = updatedSubjects.map(subject => ({
   id: subject.id,
   name: subject.name,
@@ -98,16 +97,17 @@ const subjects = updatedSubjects.map(subject => ({
         subject.id === 'accounting' ? '📊' : 
         subject.id === 'english-hl' ? '📖' : '📚',
   description: subject.description,
-  progress: 0, // This will be updated from user data
-  lastAccessed: 'Not yet accessed',  topics: subject.modules.map((module: any) => ({
+  progress: 0,
+  lastAccessed: 'Not yet accessed',
+  topics: subject.modules.map((module: any) => ({
     id: module.id,
     name: module.name,
-    progress: 0, // This will be updated from user data
+    progress: 0,
     lessons: module.lessons.map((lesson: any) => ({ 
       id: lesson.id,
       title: lesson.title,
-      completed: false, // This will be updated from user data
-      lessonId: lesson.id // Keep original ID for content lookup
+      completed: false,
+      lessonId: lesson.id
     }))
   }))
 }));
@@ -119,79 +119,50 @@ const StudyPage = () => {
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showNotes, setShowNotes] = useState(false);
-  const [notes, setNotes] = useState('');
-  const [timerSeconds, setTimerSeconds] = useState(0);
-  const [timerActive, setTimerActive] = useState(false);
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
   const [showSignInModal, setShowSignInModal] = useState(false);
-  const [userProgress, setUserProgress] = useState<any>(null);
+  const [showNotes, setShowNotes] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState(0);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("theory");
+  const [progress, setProgress] = useState<any>(null);
+  const timerIntervalRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     const fetchUserProgress = async () => {
       if (user) {
-        const progress = await getUserProgress(user.uid);
-        setUserProgress(progress);
+        const userProgress = await getUserProgress(user.uid);
+        setProgress(userProgress);
       }
     };
     fetchUserProgress();
+
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+    };
   }, [user]);
 
-  // Helper functions
-  const handleSubjectSelect = (subjectId: string) => {
-    setSelectedSubjects(prev => {
-      if (prev.includes(subjectId)) {
-        return prev.filter(id => id !== subjectId);
-      } else {
-        return [...prev, subjectId];
-      }
-    });
-  };
-
-  const handleStartLearning = () => {
-    setShowSubjectSelection(false);
-  };
-
-  const handleBackToSubjects = () => {
-    setShowSubjectSelection(true);
-    setSelectedTopic(null);
-    setSelectedLesson(null);
-  };
-
-  const toggleTopic = (topicId: string) => {
-    setSelectedTopic(prev => prev === topicId ? null : topicId);
-    setSelectedLesson(null);
-  };
   const handleLessonClick = async (subjectId: string, topicId: string, lessonId: string) => {
     if (!user) {
       setShowSignInModal(true);
       return;
     }
 
-    console.log('Clicking lesson:', { subjectId, topicId, lessonId });
-
-    // Start the timer when a lesson is selected
     if (!isTimerRunning) {
       handleStartTimer();
     }
 
-    // Find the lesson to get its title
     const subject: Subject | undefined = subjects.find(s => s.id === subjectId);
     const topic: Topic | undefined = subject?.topics.find((t: Topic) => t.id === topicId);
     const lesson: Lesson | undefined = topic?.lessons.find((l: Lesson) => l.id === lessonId);
 
-    // Set the active lesson
     setSelectedLesson(lessonId);
 
-    // Mark the lesson as completed in the database using the string ID
-    await markLessonCompleted(user.uid, subjectId, topicId, lessonId);
-  };
-
-  const getSubjectProgress = (subjectId: string) => {
-    const subject = userProgress?.subjects?.[subjectId];
-    if (!subject) return 0;
-    return Math.round(subject.progress);
+    if (lesson) {
+      await markLessonCompleted(user.uid, subjectId, topicId, lessonId);
+    }
   };
 
   const handleStartTimer = () => {
@@ -200,29 +171,8 @@ const StudyPage = () => {
       const interval = setInterval(() => {
         setTimerSeconds(prev => prev + 1);
       }, 1000);
-      setTimerInterval(interval);
+      timerIntervalRef.current = interval;
     }
-  };
-
-  const handlePauseTimer = () => {
-    if (isTimerRunning && timerInterval) {
-      clearInterval(timerInterval);
-      setTimerInterval(null);
-      setIsTimerRunning(false);
-    }
-  };
-
-  const handleStopTimer = async () => {
-    if (timerInterval) {
-      clearInterval(timerInterval);
-      setTimerInterval(null);
-    }
-    if (user && timerSeconds > 0) {
-      const minutes = Math.ceil(timerSeconds / 60);
-      await updateStudyTime(user.uid, minutes);
-    }
-    setTimerSeconds(0);
-    setIsTimerRunning(false);
   };
 
   const formatTime = (seconds: number) => {
@@ -232,20 +182,34 @@ const StudyPage = () => {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const handleSaveNotes = () => {
-    // This would normally save notes to user data
-    alert('Notes saved successfully!');
+  const toggleTopic = (topicId: string) => {
+    setSelectedTopic(selectedTopic === topicId ? null : topicId);
   };
 
-  const getFilteredTopics = (subject: Subject) => {
-    return subject.topics.filter((topic: Topic) => 
-      !searchQuery || 
-      topic.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      topic.lessons.some((lesson: Lesson) => 
-        lesson.title.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    );
+  const handleBackToSubjects = () => {
+    setShowSubjectSelection(true);
+    setSelectedTopic(null);
+    setSelectedLesson(null);
   };
+
+  const handleStartLearning = () => {
+    setShowSubjectSelection(false);
+  };
+
+  const handleSubjectSelect = (subjectId: string) => {
+    if (selectedSubjects.includes(subjectId)) {
+      setSelectedSubjects(selectedSubjects.filter(id => id !== subjectId));
+    } else {
+      setSelectedSubjects([...selectedSubjects, subjectId]);
+    }
+  };
+
+  const getSubjectProgress = (subjectId: string) => {
+    if (!progress?.subjects) return 0;
+    const subjectProgress = progress.subjects[subjectId];
+    return subjectProgress?.progress || 0;
+  };
+  
   const getActiveLessonContent = () => {
     if (!selectedLesson) return null;
     
@@ -258,8 +222,6 @@ const StudyPage = () => {
     const lesson: Lesson | undefined = topic.lessons.find((l: Lesson) => l.id === selectedLesson);
     if (!lesson) return null;
 
-    console.log('Rendering lesson:', { subject: subject.id, topic: topic.id, lesson: lesson.id });
-      // Use lesson's lessonId for content lookup
     const lessonId = lesson.lessonId;
     
     switch (selectedSubjects[0]) {
@@ -277,21 +239,10 @@ const StudyPage = () => {
           case 'transformations': return <Transformations />;
           case 'function-inverses': return <FunctionInverses />;
           case 'finance-growth-decay': return <FinanceGrowthDecay />;
-          case 'depreciation-inflation': return <DepreciationInflation />;
-          case 'annuities': return <AnnuitiesPresentFutureValue />;
-          case 'first-principles': return <FirstPrinciplesDifferentiation />;
-          case 'rules-differentiation': return <RulesOfDifferentiation />;
-          case 'maxima-minima': return <MaximaAndMinima />;
-          case 'sketching-graphs': return <SketchingGraphsUsingDerivatives />;
-          case 'basic-probability': return <BasicProbabilityRules />;
-          case 'tree-diagrams': return <TreeDiagrams />;
-          case 'venn-diagrams': return <VennDiagrams />;
-          case 'independent-dependent': return <IndependentDependentEvents />;
-          case 'statistics-basics': return <StatisticsMeanMedianMode />;
           default: return null;
         }
       case 'english-hl':
-        switch (selectedLesson) {
+        switch (lessonId) {
           case 'poetry-analysis': return <PoetryAnalysis />;
           case 'shakespeare-study': return <ShakespeareDrama />;
           case 'novel-analysis': return <NovelAnalysis />;
@@ -346,240 +297,177 @@ const StudyPage = () => {
     <AuthCheck required={true}>
       <div className="min-h-screen bg-gray-50">
         <Navbar />
-        <main className="flex-1 flex overflow-hidden">
-          {showSubjectSelection ? (
-            <div className="flex-1 p-4">
-              <div className="max-w-7xl mx-auto">
-                <div className="text-center mb-4">
-                  <h1 className="text-2xl font-bold text-gray-900">Choose Your Subjects</h1>
-                  <p className="mt-1 text-sm text-gray-600">Select one or more subjects to start learning</p>
+        <main className="flex-1">
+          {/* Mobile Menu Toggle */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="fixed bottom-4 right-4 z-50 lg:hidden bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} 
+              />
+            </svg>
+          </button>
+
+          <div className="flex flex-col lg:flex-row">
+            {/* Sidebar - Subject & Topic Navigation */}
+            <div className={`
+              fixed lg:static inset-0 bg-white lg:bg-transparent
+              w-full lg:w-80 h-full lg:min-h-screen overflow-y-auto
+              transform transition-transform duration-300 ease-in-out
+              ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+              lg:translate-x-0 z-40
+              lg:border-r lg:border-gray-200
+            `}>
+              <div className="sticky top-0 bg-white p-4 border-b border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900">Your Study Path</h2>
+                  <button 
+                    className="lg:hidden text-gray-500 hover:text-gray-700"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search topics..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                  <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                </div>
+              </div>
 
-                <CurriculumDemoSection subjects={updatedSubjects} />
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {subjects.map((subject) => (
-                    <div
-                      key={subject.id}
-                      className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 cursor-pointer ${
-                        selectedSubjects.includes(subject.id) ? 'ring-2 ring-blue-500' : ''
-                      }`}
-                      onClick={() => handleSubjectSelect(subject.id)}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-lg">{subject.icon}</span>
-                        <h3 className="font-medium text-sm">{subject.name}</h3>
-                      </div>
-                      <p className="text-xs text-gray-600 mb-2 line-clamp-2">{subject.description}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">
-                          {getSubjectProgress(subject.id)}% Complete
-                        </span>
-                        <div className="w-16 h-1 bg-gray-200 rounded-full">
-                          <div
-                            className="h-1 bg-blue-500 rounded-full"
-                            style={{ width: `${getSubjectProgress(subject.id)}%` }}
-                          />
+              {/* Subject & Topic List */}
+              <div className="p-4 space-y-4">
+                {subjects
+                  .filter(subject => selectedSubjects.includes(subject.id))
+                  .map(subject => (
+                    <div key={subject.id} className="space-y-2">
+                      <button
+                        onClick={() => setSelectedTopic(null)}
+                        className="w-full text-left p-3 hover:bg-gray-50 rounded-md flex items-center space-x-3"
+                      >
+                        <span className="text-2xl">{subject.icon}</span>
+                        <div>
+                          <h4 className="font-medium text-gray-900">{subject.name}</h4>
+                          <p className="text-sm text-gray-500">{getSubjectProgress(subject.id)}% Complete</p>
                         </div>
+                      </button>
+
+                      {/* Topics */}
+                      <div className="ml-4 space-y-2">
+                        {subject.topics.map((topic: any) => (
+                          <div key={topic.id}>
+                            <button
+                              onClick={() => toggleTopic(topic.id)}
+                              className="w-full text-left p-2 hover:bg-gray-50 rounded-md flex items-center justify-between"
+                            >
+                              <span className="text-sm text-gray-700">{topic.name}</span>
+                              {selectedTopic === topic.id ? (
+                                <ChevronDownIcon className="h-5 w-5" />
+                              ) : (
+                                <ChevronRightIcon className="h-5 w-5" />
+                              )}
+                            </button>
+
+                            {selectedTopic === topic.id && (
+                              <div className="ml-4 mt-2 space-y-1">
+                                {topic.lessons.map((lesson: any) => (
+                                  <button
+                                    key={lesson.id}
+                                    onClick={() => handleLessonClick(subject.id, topic.id, lesson.id)}
+                                    className={`w-full text-left p-2 rounded-md flex items-center space-x-2
+                                      ${selectedLesson === lesson.id ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}
+                                    `}
+                                  >
+                                    {lesson.completed ? (
+                                      <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                                    ) : (
+                                      <DocumentCheckIcon className="h-5 w-5 text-gray-400" />
+                                    )}
+                                    <span className="text-sm">{lesson.title}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))}
-                </div>
+              </div>
+            </div>
 
-                {selectedSubjects.length > 0 && (
-                  <div className="mt-4 text-center">
-                    <button
-                      onClick={handleStartLearning}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors inline-flex items-center space-x-2 text-sm"
-                    >
-                      <span>Start Studying {selectedSubjects.length} Subject{selectedSubjects.length > 1 ? 's' : ''}</span>
-                      <ArrowRightIcon className="h-4 w-4" />
-                    </button>
+            {/* Main Content Area */}
+            <div className="flex-1 lg:ml-80">
+              <div className="max-w-4xl mx-auto px-4 py-6 lg:px-8">
+                {selectedLesson ? (
+                  <div className="space-y-6">
+                    {/* Lesson Header */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <h1 className="text-2xl font-bold text-gray-900">
+                        {subjects
+                          .filter(subject => selectedSubjects.includes(subject.id))
+                          .flatMap(subject => subject.topics)
+                          .find((topic: any) => topic.id === selectedTopic)
+                          ?.lessons.find((lesson: any) => lesson.id === selectedLesson)?.title}
+                      </h1>
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-2">
+                          <ClockIcon className="h-5 w-5 text-gray-500" />
+                          <span className="text-lg font-mono">{formatTime(timerSeconds)}</span>
+                        </div>
+                        <button
+                          onClick={() => setShowNotes(!showNotes)}
+                          className={`p-2 rounded-md transition-colors ${
+                            showNotes 
+                              ? 'bg-blue-100 text-blue-600' 
+                              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          <PencilIcon className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Lesson Content */}
+                    <div className="bg-white rounded-xl shadow-sm">
+                      {/* Tabs */}
+                      <MobileResponsiveTabs
+                        tabs={[
+                          { id: "theory", label: "Theory" },
+                          { id: "practice", label: "Practice" },
+                          { id: "quiz", label: "Quiz" }
+                        ]}
+                        activeTab={activeTab}
+                        onTabChange={(tab) => setActiveTab(tab)}
+                      />
+
+                      {/* Content */}
+                      <div className="p-4 md:p-6">
+                        {getActiveLessonContent()}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <h2 className="text-xl font-semibold text-gray-900">Select a Lesson</h2>
+                    <p className="mt-2 text-gray-600">Choose a lesson from the menu to start learning</p>
                   </div>
                 )}
               </div>
             </div>
-          ) : (
-            <div className="flex-1 flex flex-col p-4">
-              {/* Back Button */}
-              <div className="mb-4">
-                <button
-                  onClick={handleBackToSubjects}
-                  className="flex items-center text-gray-600 hover:text-gray-900"
-                >
-                  <ChevronLeftIcon className="h-5 w-5 mr-1" />
-                  Back to Subject Selection
-                </button>
-              </div>
-
-              {/* Topic and Lesson Selection */}
-              <div className="flex-1 flex h-[calc(100vh-12rem)]">
-                {/* First Column: Selected Subjects */}
-                <div className="w-64 bg-white shadow-sm p-4 overflow-y-auto border-r border-gray-200">
-                  <h3 className="font-semibold text-gray-900 mb-4">Your Subjects</h3>
-                  <div className="space-y-2">
-                    {subjects
-                      .filter(subject => selectedSubjects.includes(subject.id))
-                      .map(subject => (
-                        <button
-                          key={subject.id}
-                          onClick={() => setSelectedTopic(null)}
-                          className="w-full text-left p-3 hover:bg-gray-50 rounded-md flex items-center space-x-3"
-                        >
-                          <span className="text-2xl">{subject.icon}</span>
-                          <div>
-                            <h4 className="font-medium text-gray-900">{subject.name}</h4>
-                            <p className="text-sm text-gray-500">{subject.progress}% Complete</p>
-                          </div>
-                        </button>
-                      ))}
-                  </div>
-                </div>
-
-                {/* Second Column: Topics and Lessons */}
-                <div className="w-80 bg-white shadow-sm p-4 overflow-y-auto border-r border-gray-200">
-                  {selectedSubjects.length > 0 ? (
-                    <div>
-                      <div className="mb-4">
-                        <input
-                          type="text"
-                          placeholder="Search topics..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded-md"
-                        />
-                      </div>
-                      <div className="space-y-4">
-                        {subjects
-                          .filter(subject => selectedSubjects.includes(subject.id))
-                          .map(subject => (
-                            <div key={subject.id} className="mb-6">
-                              <h3 className="font-semibold text-gray-900 mb-2">{subject.name}</h3>
-                              {getFilteredTopics(subject).map((topic: any) => (
-                                <div key={topic.id} className="mb-4">
-                                  <button
-                                    onClick={() => toggleTopic(topic.id)}
-                                    className="w-full text-left p-2 hover:bg-gray-50 rounded-md flex items-center justify-between"
-                                  >
-                                    <span>{topic.name}</span>
-                                    {selectedTopic === topic.id ? (
-                                      <ChevronDownIcon className="h-5 w-5" />
-                                    ) : (
-                                      <ChevronRightIcon className="h-5 w-5" />
-                                    )}
-                                  </button>
-                                  {selectedTopic === topic.id && (
-                                    <div className="ml-4 mt-2 space-y-1">
-                                      {topic.lessons.map((lesson: any) => (
-                                        <button
-                                          key={lesson.id}
-                                          onClick={() => handleLessonClick(
-                                            subject.id,
-                                            topic.id,
-                                            lesson.id
-                                          )}
-                                          className={`w-full text-left p-2 rounded-md flex items-center space-x-2 ${
-                                            selectedLesson === lesson.id ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'
-                                          }`}
-                                        >
-                                          {lesson.completed ? (
-                                            <CheckCircleIcon className="h-5 w-5 text-green-500" />
-                                          ) : (
-                                            <DocumentCheckIcon className="h-5 w-5 text-gray-400" />
-                                          )}
-                                          <span>{lesson.title}</span>
-                                        </button>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <h3 className="text-gray-900 font-medium">No Subjects Selected</h3>
-                      <p className="text-gray-500 mt-1">Select subjects from the left panel</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Third Column: Lesson Content and Notes */}
-                <div className="flex-1 bg-white shadow-sm p-6 overflow-y-auto">
-                  {selectedLesson ? (
-                    <div className="flex flex-col h-full">
-                      {/* Header with Title, Timer, and Notes Icon */}
-                      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
-                        <div className="flex items-center space-x-4">
-                          <h2 className="text-2xl font-bold text-gray-900">
-                            {subjects
-                              .filter(subject => selectedSubjects.includes(subject.id))
-                              .flatMap(subject => subject.topics)
-                              .find((topic: any) => topic.id === selectedTopic)
-                              ?.lessons.find((lesson: any) => lesson.id === selectedLesson)?.title}
-                          </h2>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                          <div className="flex items-center space-x-2">
-                            <ClockIcon className="h-5 w-5 text-gray-500" />
-                            <span className="text-lg font-mono">{formatTime(timerSeconds)}</span>
-                          </div>
-                          <button
-                            onClick={() => setShowNotes(!showNotes)}
-                            className={`p-2 rounded-md transition-colors ${
-                              showNotes 
-                                ? 'bg-blue-100 text-blue-600' 
-                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                            }`}
-                          >
-                            <PencilIcon className="h-5 w-5" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Main Content Area */}
-                      <div className="flex-1 flex gap-6">
-                        {/* Lesson Content */}
-                        <div className={`${showNotes ? 'w-2/3' : 'w-full'} transition-all duration-300`}>
-                          {getActiveLessonContent()}
-                        </div>
-
-                        {/* Notes Panel */}
-                        {showNotes && (
-                          <div className="w-1/3 border-l border-gray-200 pl-6 transition-all duration-300">
-                            <div className="sticky top-0 bg-white pb-4">
-                              <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-semibold text-gray-900">Notes</h3>
-                                <button
-                                  onClick={handleSaveNotes}
-                                  className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
-                                >
-                                  Save
-                                </button>
-                              </div>
-                              <textarea
-                                value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
-                                placeholder="Take notes here..."
-                                className="w-full h-[calc(100vh-20rem)] p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <h2 className="text-2xl font-semibold text-gray-900">Select a Lesson</h2>
-                      <p className="mt-2 text-gray-600">Choose a lesson from the middle panel to start learning</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
         </main>
       </div>
     </AuthCheck>
