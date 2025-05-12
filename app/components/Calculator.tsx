@@ -260,13 +260,13 @@ export default function Calculator() {
       setDisplay(display + '.');
     }
   };
-
   if (!isCalculatorOpen) return null;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div 
-        className="bg-white rounded-2xl shadow-2xl w-[32rem] overflow-hidden"
+      {/* Semi-transparent overlay */}
+      <div className="fixed inset-0 bg-black/20" onClick={closeCalculator} />
+      <div        className="bg-white rounded-2xl shadow-2xl w-[32rem] overflow-hidden relative z-50"
         style={{
           position: 'absolute',
           left: position.x,

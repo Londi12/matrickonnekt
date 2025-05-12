@@ -23,15 +23,17 @@ export default function ClientCalculator() {
 
   return (
     <>
-      <button
-        onClick={openCalculator}
-        className="fixed bottom-4 right-4 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors z-50"
-        aria-label="Open Calculator"
-        title="Open Calculator (Ctrl + .)"
-      >
-        <CalculatorIcon className="h-6 w-6" />
-      </button>
+      {!isCalculatorOpen && (
+        <button
+          onClick={openCalculator}
+          className="fixed bottom-4 right-4 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors z-50"
+          aria-label="Open Calculator"
+          title="Open Calculator (Ctrl + .)"
+        >
+          <CalculatorIcon className="h-6 w-6" />
+        </button>
+      )}
       <Calculator />
     </>
   );
-} 
+}
