@@ -7,7 +7,8 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut, 
-  initAuth 
+  initAuth,
+  getCurrentUser
 } from '../services/authService';
 import { initializeUserProgress } from '../services/userDataService';
 
