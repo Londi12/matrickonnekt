@@ -10,7 +10,7 @@ import {
   initAuth,
   getCurrentUser
 } from '../services/authService';
-import { initializeUserProgress } from '../services/userDataService';
+import { initializeUserProgress, getUserProgress } from '../services/userDataService';
 
 interface AuthContextType {
   user: User | null;
@@ -35,19 +35,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
   useEffect(() => {
     // Initialize auth state immediately from localStorage first
     const currentUser = getCurrentUser();
-    setUser(currentUser);
+    if (currentUser) {
+      setUser(currentUser);
+      // Pre-fetch user progress when auth state is initialized
+      getUserProgress(currentUser.uid).then(() => {
+        setLoading(false);
+      });
+    } else {
+      setLoading(false);
+    }
     
     // Then set up the auth state listener
     const unsubscribe = initAuth((authUser) => {
       setUser(authUser);
-      setLoading(false);
+      if (authUser) {
+        // Pre-fetch user progress when auth state changes
+        getUserProgress(authUser.uid).then(() => {
+          setLoading(false);
+        });
+      } else {
+        setLoading(false);
+      }
     });
-    
-    // Set loading to false after initial check
-    setLoading(false);
     
     return () => {
       if (unsubscribe) unsubscribe();

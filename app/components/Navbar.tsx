@@ -44,24 +44,30 @@ const Navbar: React.FC = () => {
           </div>
           
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
-            <Link 
-              href="/study" 
-              className="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 hover:scale-105"
+          <div className="hidden sm:flex sm:items-center sm:space-x-6">
+            <Link
+              href="/study"
+              className="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
             >
               Study
             </Link>
-            <Link 
-              href="/resources" 
-              className="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 hover:scale-105"
-            >
-              Resources
-            </Link>
             <Link
               href="/mock-exam"
-              className="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 hover:scale-105"
+              className="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
             >
-              Mock Exams
+              Mock Exam
+            </Link>
+            <Link
+              href="/flashcards"
+              className="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+            >
+              Flashcards
+            </Link>
+            <Link
+              href="/resources"
+              className="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+            >
+              Resources
             </Link>
             
             {/* Profile Icon with Dropdown */}

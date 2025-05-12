@@ -4,12 +4,15 @@ import { Inter } from 'next/font/google'
 import Providers from './components/Providers'
 import ErrorBoundary from './components/ErrorBoundary'
 import ClientCalculator from './components/ClientCalculator'
+import { AuthProvider } from './context/AuthContext';
+import { Toaster } from 'react-hot-toast';
+import ProgressUpdateListener from './components/ProgressUpdateListener';
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Matrickonnekt',
-  description: 'Your Mathematics Learning Platform',
+  description: 'Interactive learning platform for students',
   viewport: {
     width: 'device-width',
     initialScale: 1,
@@ -24,12 +27,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">      <body className={inter.className}>
+    <html lang="en">      
+      <body className={inter.className}>
         <ErrorBoundary>
-          <Providers>
-            {children}
-            <ClientCalculator />
-          </Providers>
+          <AuthProvider>
+            <Providers>
+              {children}
+              <ClientCalculator />
+              <Toaster position="bottom-right" />
+              <ProgressUpdateListener />
+            </Providers>
+          </AuthProvider>
         </ErrorBoundary>
       </body>
     </html>
