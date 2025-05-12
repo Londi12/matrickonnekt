@@ -17,11 +17,10 @@ export default function UpcomingSessionsCard({ userProgress }: UpcomingSessionsC
   const generateRecommendedSessions = () => {
     const sessions = [];
 
-    if (userProgress?.subjects) {
-      // Convert subjects to an array and sort by last activity
+    if (userProgress?.subjects) {      // Convert subjects to an array and sort by last study date
       const subjectEntries = Object.entries(userProgress.subjects)
         .map(([id, data]) => ({ id, ...data }))
-        .sort((a, b) => (b.lastActivity?.getTime() || 0) - (a.lastActivity?.getTime() || 0));
+        .sort((a, b) => (b.lastStudied?.getTime() || 0) - (a.lastStudied?.getTime() || 0));
 
       // Take the top 3 subjects
       for (let i = 0; i < Math.min(3, subjectEntries.length); i++) {
