@@ -5,9 +5,6 @@ module.exports = {
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  plugins: [
-    require('@tailwindcss/line-clamp'),
-  ],
   theme: {
     extend: {
       colors: {
@@ -34,11 +31,6 @@ module.exports = {
       minWidth: {
         'touch': '44px',
       }
-    },
-  },
-  variants: {
-    extend: {
-      touchAction: ['hover', 'focus'],
     },
   },
   plugins: [
