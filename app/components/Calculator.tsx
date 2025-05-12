@@ -15,6 +15,55 @@ export default function Calculator() {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  // Set initial position after mount and handle keyboard shortcuts
+  useEffect(() => {
+    // Center the calculator
+    const centerCalculator = () => {
+      const width = 512; // 32rem
+      const height = 600; // approximate height
+      const x = Math.max(0, Math.min(window.innerWidth - width, (window.innerWidth - width) / 2));
+      const y = Math.max(0, Math.min(window.innerHeight - height, (window.innerHeight - height) / 2));
+      setPosition({ x, y });
+    };
+
+    // Initialize position
+    centerCalculator();
+
+    // Handle keyboard shortcuts
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isCalculatorOpen) return;
+
+      if (e.key === 'Escape') {
+        closeCalculator();
+      } else if (e.key >= '0' && e.key <= '9') {
+        handleNumber(e.key);
+      } else if (e.key === '.') {
+        handleDecimal();
+      } else if (e.key === '+' || e.key === '-' || e.key === '*' || e.key === '/') {
+        handleOperator(e.key);
+      } else if (e.key === 'Enter' || e.key === '=') {
+        handleEqual();
+      } else if (e.key === 'Backspace') {
+        handleBackspace();
+      } else if (e.key === 'Delete' || e.key === 'c' || e.key === 'C') {
+        handleClear();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('resize', centerCalculator);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('resize', centerCalculator);
+    };
+  }, [isCalculatorOpen, closeCalculator]);
+
+  const factorial = (n: number): number => {
+    if (n < 0 || !Number.isInteger(n)) return NaN;
+    if (n === 0 || n === 1) return 1;
+    return n * factorial(n - 1);
+  };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.target instanceof HTMLElement && e.target.closest('.calculator-header')) {
@@ -25,12 +74,17 @@ export default function Calculator() {
       });
     }
   };
-
   const handleMouseMove = (e: MouseEvent) => {
     if (isDragging) {
+      // Ensure calculator stays within window bounds
+      const width = 512; // 32rem
+      const height = 600; // approximate height
+      const newX = Math.max(0, Math.min(window.innerWidth - width, e.clientX - dragOffset.x));
+      const newY = Math.max(0, Math.min(window.innerHeight - height, e.clientY - dragOffset.y));
+      
       setPosition({
-        x: e.clientX - dragOffset.x,
-        y: e.clientY - dragOffset.y
+        x: newX,
+        y: newY
       });
     }
   };
@@ -147,13 +201,13 @@ export default function Calculator() {
         case 'factorial':
           result = factorial(num);
           break;
-        case 'percent':
-          result = num / 100;
+        case 'percent':          result = num / 100;
           break;
+
         default:
           return;
       }
-      
+
       setDisplay(result.toString());
       setIsNewNumber(true);
     } catch (error) {
@@ -162,15 +216,20 @@ export default function Calculator() {
     }
   };
 
-  const factorial = (n: number): number => {
-    if (n < 0 || !Number.isInteger(n)) return NaN;
-    if (n === 0 || n === 1) return 1;
-    return n * factorial(n - 1);
-  };
-
   const handleEqual = () => {
     try {
-      const result = eval(equation + display);
+      if (!equation.trim()) return;
+      
+      // Create a safe evaluation environment
+      const evalEquation = equation + display;
+      // Replace × with * and ÷ with /
+      const sanitizedEquation = evalEquation
+        .replace(/×/g, '*')
+        .replace(/÷/g, '/');
+      
+      // Use Function constructor to create a safe evaluation environment
+      const result = new Function('return ' + sanitizedEquation)();
+      
       setDisplay(result.toString());
       setEquation('');
       setIsNewNumber(true);
@@ -250,42 +309,9 @@ export default function Calculator() {
         </div>
 
         {/* Buttons */}
-        <div className="p-4 grid grid-cols-5 gap-2">
+        <div className="p-4 grid grid-cols-4 gap-2">
           {isScientificMode && (
             <>
-              {/* Row 1: Memory and Constants */}
-              <button
-                onClick={() => handleScientificFunction('m+')}
-                className="bg-gray-100 text-gray-800 p-2.5 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                M+
-              </button>
-              <button
-                onClick={() => handleScientificFunction('m-')}
-                className="bg-gray-100 text-gray-800 p-2.5 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                M-
-              </button>
-              <button
-                onClick={() => handleScientificFunction('mr')}
-                className="bg-gray-100 text-gray-800 p-2.5 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                MR
-              </button>
-              <button
-                onClick={() => handleScientificFunction('mc')}
-                className="bg-gray-100 text-gray-800 p-2.5 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                MC
-              </button>
-              <button
-                onClick={() => handleScientificFunction('pi')}
-                className="bg-gray-100 text-gray-800 p-2.5 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                π
-              </button>
-
-              {/* Row 2: Trigonometric Functions */}
               <button
                 onClick={() => handleScientificFunction('sin')}
                 className="bg-gray-100 text-gray-800 p-2.5 rounded-lg hover:bg-gray-200 transition-colors"
@@ -305,85 +331,14 @@ export default function Calculator() {
                 tan
               </button>
               <button
-                onClick={() => handleScientificFunction('asin')}
-                className="bg-gray-100 text-gray-800 p-2.5 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                sin⁻¹
-              </button>
-              <button
-                onClick={() => handleScientificFunction('acos')}
-                className="bg-gray-100 text-gray-800 p-2.5 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                cos⁻¹
-              </button>
-
-              {/* Row 3: Logarithms and Powers */}
-              <button
                 onClick={() => handleScientificFunction('log')}
                 className="bg-gray-100 text-gray-800 p-2.5 rounded-lg hover:bg-gray-200 transition-colors"
               >
                 log
               </button>
-              <button
-                onClick={() => handleScientificFunction('ln')}
-                className="bg-gray-100 text-gray-800 p-2.5 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                ln
-              </button>
-              <button
-                onClick={() => handleScientificFunction('exp')}
-                className="bg-gray-100 text-gray-800 p-2.5 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                eˣ
-              </button>
-              <button
-                onClick={() => handleScientificFunction('pow10')}
-                className="bg-gray-100 text-gray-800 p-2.5 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                10ˣ
-              </button>
-              <button
-                onClick={() => handleScientificFunction('reciprocal')}
-                className="bg-gray-100 text-gray-800 p-2.5 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                1/x
-              </button>
-
-              {/* Row 4: Powers and Roots */}
-              <button
-                onClick={() => handleScientificFunction('square')}
-                className="bg-gray-100 text-gray-800 p-2.5 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                x²
-              </button>
-              <button
-                onClick={() => handleScientificFunction('cube')}
-                className="bg-gray-100 text-gray-800 p-2.5 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                x³
-              </button>
-              <button
-                onClick={() => handleScientificFunction('sqrt')}
-                className="bg-gray-100 text-gray-800 p-2.5 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                √
-              </button>
-              <button
-                onClick={() => handleScientificFunction('factorial')}
-                className="bg-gray-100 text-gray-800 p-2.5 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                x!
-              </button>
-              <button
-                onClick={() => handleScientificFunction('abs')}
-                className="bg-gray-100 text-gray-800 p-2.5 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                |x|
-              </button>
             </>
           )}
 
-          {/* Standard Calculator Buttons */}
           <button
             onClick={handleClear}
             className="col-span-2 bg-red-100 text-red-800 p-2.5 rounded-lg hover:bg-red-200 transition-colors"
@@ -395,12 +350,6 @@ export default function Calculator() {
             className="bg-gray-100 text-gray-800 p-2.5 rounded-lg hover:bg-gray-200 transition-colors"
           >
             <BackspaceIcon className="h-5 w-5 mx-auto" />
-          </button>
-          <button
-            onClick={() => handleScientificFunction('percent')}
-            className="bg-gray-100 text-gray-800 p-2.5 rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            %
           </button>
           <button
             onClick={() => handleOperator('/')}
@@ -471,7 +420,7 @@ export default function Calculator() {
           </button>
           <button
             onClick={handleEqual}
-            className="bg-blue-600 text-white p-2.5 rounded-lg hover:bg-blue-700 transition-colors row-span-2"
+            className="bg-blue-600 text-white p-2.5 rounded-lg hover:bg-blue-700 transition-colors"
           >
             =
           </button>
@@ -479,4 +428,4 @@ export default function Calculator() {
       </div>
     </div>
   );
-} 
+}

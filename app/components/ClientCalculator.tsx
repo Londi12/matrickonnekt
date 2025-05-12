@@ -1,35 +1,37 @@
 'use client';
 
-import { useState } from 'react';
+import { useCalculator } from '../context/CalculatorContext';
+import { CalculatorIcon } from '@heroicons/react/24/outline'; 
 import Calculator from './Calculator';
+import { useEffect } from 'react';
 
 export default function ClientCalculator() {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isCalculatorOpen, openCalculator } = useCalculator();
+
+  // Handle keyboard shortcut (Ctrl + .)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === '.') {
+        e.preventDefault();
+        openCalculator();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [openCalculator]);
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <>
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+        onClick={openCalculator}
+        className="fixed bottom-4 right-4 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors z-50"
+        aria-label="Open Calculator"
+        title="Open Calculator (Ctrl + .)"
       >
-        {isOpen ? 'Close Calculator' : 'Open Calculator'}
+        <CalculatorIcon className="h-6 w-6" />
       </button>
-      {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Calculator</h2>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ✕
-              </button>
-            </div>
-            <Calculator />
-          </div>
-        </div>
-      )}
-    </div>
+      <Calculator />
+    </>
   );
 } 
