@@ -526,13 +526,13 @@ export default function StudyPage() {
                 {/* Content Area */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-[calc(100vh-16rem)] overflow-y-auto">
                   {activeTab === "theory" && (
-                    <Theory content={currentLesson.theory} />
+                    <Theory content={currentLesson.theory || []} />
                   )}
 
                   {activeTab === "examples" && (
                     <div className="p-6">
                       <Examples
-                        examples={currentLesson.examples}
+                        examples={currentLesson.examples || []}
                         currentExample={currentExample}
                         showSolution={showSolution}
                         onShowSolution={(index) =>
@@ -550,7 +550,7 @@ export default function StudyPage() {
                   {activeTab === "quiz" && (
                     <div className="p-6">
                       <Quiz 
-                        questions={currentLesson.quiz} 
+                        questions={currentLesson.quiz || []} 
                         onComplete={handleQuizComplete}
                       />
                     </div>
@@ -586,4 +586,4 @@ export default function StudyPage() {
       </div>
     </div>
   );
-} 
+}
