@@ -13,7 +13,6 @@
   NEXT_TELEMETRY_DISABLED = "1"
   NODE_VERSION = "18.19.0"
   NPM_VERSION = "9.9.2"
-  PYTHON_VERSION = "0"
 
 [functions]
   node_bundler = "esbuild"
