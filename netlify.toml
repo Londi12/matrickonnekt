@@ -6,4 +6,8 @@
   package = "@netlify/plugin-nextjs"
 
 [build.environment]
-  NETLIFY_NEXT_PLUGIN_SKIP = "true"
+  NEXT_TELEMETRY_DISABLED = "1"
+
+[functions]
+  external_node_modules = ["@firebase/database"]
+  included_files = ["app/config/firebase.ts"]
