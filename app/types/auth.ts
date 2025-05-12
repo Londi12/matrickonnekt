@@ -6,6 +6,7 @@ export interface User {
   photoURL: string | null;
   emailVerified: boolean;
   isAnonymous: boolean;
+  isAdmin?: boolean;
   metadata: {
     creationTime: string;
     lastSignInTime: string;
