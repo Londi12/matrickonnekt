@@ -5,17 +5,25 @@ import Navbar from '../components/Navbar';
 import AuthCheck from '../components/AuthCheck';
 import { useAuth } from '../context/AuthContext';
 import { recordQuizCompletion } from '../utils/userProgress';
-import ProblemSetCard from '../components/ProblemSetCard';
+import MockPaperCard from '../components/mock-exam/MockPaperCard';
+import MockExam from '../components/mock-exam/MockExam';
+import MockExamResult from '../components/mock-exam/MockExamResult';
+import SignInModal from '../components/mock-exam/SignInModal';
+import { MockPaper, UserMockExamResult } from '../types/mockExam';
+import { mockPapers } from '../data/mockExamData';
+import { Tab } from '@headlessui/react';
 import { 
-  BookOpenIcon, 
   ClockIcon, 
   StarIcon, 
   TrophyIcon, 
+  DocumentTextIcon,
+  ChartBarIcon,
   FireIcon,
-  BookmarkIcon,
-  MagnifyingGlassIcon
+  BookOpenIcon,
+  MagnifyingGlassIcon,
+  BookmarkIcon
 } from '@heroicons/react/24/outline';
-import SignInModal from '../components/SignInModal';
+import ProblemSetCard from '../components/ProblemSetCard';
 
 // Mock data for demonstration
 const subjects = [
@@ -359,6 +367,51 @@ const problemSets = [
   }
 ];
 
+const mockPapers: MockPaper[] = [
+  {
+    id: 'math-2024-p1',
+    subject: 'Mathematics',
+    name: 'Mock Paper 1: Core Algebra & Functions',
+    timeLimit: 120,
+    totalMarks: 100,
+    difficulty: 'medium',
+    questions: [
+      {
+        id: 'q1',
+        question: 'Solve for x: (x + 3)(x - 2) = 0',
+        marks: 3,
+        difficulty: 'easy',
+        topic: 'Algebra',
+        solution: 'Using the zero product property:\n(x + 3) = 0 or (x - 2) = 0\nx = -3 or x = 2',
+        answer: 'x = -3 or x = 2',
+        source: { year: 2023, paper: 'DBE Paper 1', questionNumber: 1 }
+      },
+      // Add more questions...
+    ]
+  },
+  {
+    id: 'math-2024-p2',
+    subject: 'Mathematics',
+    name: 'Mock Paper 2: Functions & Calculus',
+    timeLimit: 120,
+    totalMarks: 100,
+    difficulty: 'hard',
+    questions: [
+      {
+        id: 'q1',
+        question: 'Find dy/dx if y = x³ - 3x² + 2x - 1',
+        marks: 4,
+        difficulty: 'medium',
+        topic: 'Calculus',
+        solution: 'Using the power rule and sum rule:\ndy/dx = 3x² - 6x + 2',
+        answer: '3x² - 6x + 2',
+        source: { year: 2023, paper: 'DBE Paper 2', questionNumber: 5 }
+      },
+      // Add more questions...
+    ]
+  }
+];
+
 export default function PracticePage() {
   const { user, loading } = useAuth();
   const [showSignInModal, setShowSignInModal] = useState(false);
@@ -368,6 +421,20 @@ export default function PracticePage() {
   const [showBookmarked, setShowBookmarked] = useState(false);
   const [bookmarkedSets, setBookmarkedSets] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [selectedPaper, setSelectedPaper] = useState<MockPaper | null>(null);
+  const [isTimed, setIsTimed] = useState(false);
+  const [examResult, setExamResult] = useState<UserMockExamResult | null>(null);
+  const [selectedTab, setSelectedTab] = useState(0);
+
+  // Mock user progress
+  const mockProgress = {
+    'math-2024-p1': {
+      bestScore: 85,
+      completed: true,
+      attemptCount: 2
+    }
+  };
 
   if (loading) {
     return (
@@ -419,6 +486,28 @@ export default function PracticePage() {
     }
   };
 
+  const handleStartExam = (paperId: string, timed: boolean) => {
+    const paper = mockPapers.find(p => p.id === paperId);
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    if (paper) {
+      setSelectedPaper(paper);
+      setIsTimed(timed);
+    }
+  };
+
+  const handleExamComplete = (result: UserMockExamResult) => {
+    setExamResult(result);
+    // Save result to backend here
+  };
+
+  const handleExit = () => {
+    setSelectedPaper(null);
+    setExamResult(null);
+  };
+
   const filteredProblemSets = problemSets.filter(set => {
     if (showBookmarked && !bookmarkedSets.includes(set.id)) return false;
     if (selectedSubject && set.subject !== selectedSubject) return false;
@@ -432,6 +521,37 @@ export default function PracticePage() {
     const subject = subjects.find(s => s.id === subjectId);
     return subject ? subject.topics : [];
   };
+
+  if (selectedPaper && examResult) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <MockExamResult result={examResult} paper={selectedPaper} />
+        <div className="flex justify-center mt-6 mb-8">
+          <button
+            onClick={handleExit}
+            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Return to Practice
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (selectedPaper) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <MockExam
+          paper={selectedPaper}
+          isTimed={isTimed}
+          onComplete={handleExamComplete}
+          onExit={handleExit}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -579,7 +699,95 @@ export default function PracticePage() {
             </AuthCheck>
           ))}
         </div>
+
+        {/* Mock Exam Section */}
+        <div className="mt-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Mock Exam Practice</h2>
+          <p className="text-gray-600 mb-6">
+            Practice with full-length mock papers aligned with the NSC curriculum. Track your progress and earn badges as you improve.
+          </p>
+
+          <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab}>
+            <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1 mb-6">
+              <Tab
+                className={({ selected }) =>
+                  `w-full rounded-lg py-2.5 text-sm font-medium leading-5
+                   ${selected
+                    ? 'bg-white text-blue-700 shadow'
+                    : 'text-blue-100 hover:bg-white/[0.12] hover:text-white'
+                  }`
+                }
+              >
+                Available Papers
+              </Tab>
+              <Tab
+                className={({ selected }) =>
+                  `w-full rounded-lg py-2.5 text-sm font-medium leading-5
+                   ${selected
+                    ? 'bg-white text-blue-700 shadow'
+                    : 'text-blue-100 hover:bg-white/[0.12] hover:text-white'
+                  }`
+                }
+              >
+                Your Performance
+              </Tab>
+            </Tab.List>
+            <Tab.Panels>
+              <Tab.Panel>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {mockPapers.map((paper) => (
+                    <MockPaperCard
+                      key={paper.id}
+                      paper={paper}
+                      onStart={handleStartExam}
+                      userProgress={mockProgress[paper.id as keyof typeof mockProgress]}
+                    />
+                  ))}
+                </div>
+              </Tab.Panel>
+              <Tab.Panel>
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-blue-600 font-medium">Average Score</p>
+                          <p className="text-2xl font-bold text-blue-700">76%</p>
+                        </div>
+                        <ChartBarIcon className="h-8 w-8 text-blue-500" />
+                      </div>
+                    </div>
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-green-600 font-medium">Papers Completed</p>
+                          <p className="text-2xl font-bold text-green-700">4</p>
+                        </div>
+                        <DocumentTextIcon className="h-8 w-8 text-green-500" />
+                      </div>
+                    </div>
+                    <div className="bg-yellow-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-yellow-600 font-medium">Badges Earned</p>
+                          <p className="text-2xl font-bold text-yellow-700">6</p>
+                        </div>
+                        <TrophyIcon className="h-8 w-8 text-yellow-500" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+                  <div className="space-y-4">
+                    {/* Add recent activity items here */}
+                  </div>
+                </div>
+              </Tab.Panel>
+            </Tab.Panels>
+          </Tab.Group>
+        </div>
       </main>
+      <SignInModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </div>
   );
-} 
+}

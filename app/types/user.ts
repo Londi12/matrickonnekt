@@ -1,15 +1,19 @@
+export interface LessonCompletion {
+  id: string;
+  title: string;
+  completedAt: Date;
+}
+
+export interface SubjectProgress {
+  progress: number;
+  completedTopics: string[];
+  completedLessons: { [topicId: string]: LessonCompletion[] };
+  lastStudied: Date;
+}
+
 export interface UserProgress {
   userId: string;
-  subjects: {
-    [subjectId: string]: {
-      progress: number;
-      completedTopics: string[];
-      completedLessons: {
-        [topicId: string]: number[];
-      };
-      lastStudied: Date;
-    };
-  };
+  subjects: { [subjectId: string]: SubjectProgress };
   totalStudyTime: number;
   currentStreak: number;
   longestStreak: number;
@@ -19,12 +23,12 @@ export interface UserProgress {
 
 export interface StudyActivity {
   id: string;
-  type: 'study' | 'practice' | 'resource';
+  type: 'study';
   subject: string;
   topic: string;
-  lessonId?: number;
   timestamp: Date | string;
-  duration?: number;
+  lessonId?: string;
+  lessonTitle?: string;
   score?: number;
 }
 

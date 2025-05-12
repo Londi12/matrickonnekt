@@ -11,7 +11,7 @@ import {
   ShieldCheckIcon,
   ArrowRightIcon
 } from '@heroicons/react/24/outline';
-import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import { updateProfile, updatePassword } from '../services/authService';
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -20,9 +20,7 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
-  const handlePasswordChange = async () => {
+  const [success, setSuccess] = useState<string | null>(null);  const handlePasswordChange = async () => {
     try {
       if (!user || !user.email) return;
       
@@ -36,11 +34,9 @@ export default function ProfilePage() {
         return;
       }
 
-      // Reauthenticate user before changing password
-      const credential = EmailAuthProvider.credential(user.email, currentPassword);
-      await reauthenticateWithCredential(user, credential);
+      // Update password using our local auth service
+      await updatePassword(user, newPassword, currentPassword);
       
-      await updatePassword(user, newPassword);
       setIsChangingPassword(false);
       setCurrentPassword('');
       setNewPassword('');

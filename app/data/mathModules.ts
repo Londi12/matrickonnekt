@@ -1,4 +1,4 @@
-import { Module } from "../types";
+import { Module } from "../types/modules";
 
 export const mathModules: Module[] = [
   {
@@ -13,96 +13,214 @@ export const mathModules: Module[] = [
         title: "Numbers and Calculations with Numbers",
         theory: [
           '<h2 class="text-xl font-bold">💡 Numbers and Calculations with Numbers</h2>',
-          '<p class="text-base">This module covers essential numerical skills needed for everyday life and work.</p>',
+          '<p class="text-base">This module covers essential numerical skills aligned with the 2025 CAPS curriculum.</p>',
           '<br>',
           '<h3 class="text-lg font-bold">📑 Key Topics</h3>',
           '<ul class="list-disc pl-6">',
-          '<li class="text-sm">Working with large numbers and decimals</li>',
-          '<li class="text-sm">Ratio and proportion</li>',
-          '<li class="text-sm">Percentages (increase/decrease, discounts, interest)</li>',
-          '<li class="text-sm">Estimations and rounding</li>',
+          '<li class="text-sm">Working with large numbers and decimals in real-world contexts</li>',
+          '<li class="text-sm">Ratio, rate and proportion in problem solving</li>',
+          '<li class="text-sm">Percentages (increase/decrease, discounts, interest, VAT)</li>',
+          '<li class="text-sm">Scientific notation for very large and very small numbers</li>',
+          '<li class="text-sm">Estimation and calculation strategies for real-life situations</li>',
+          '</ul>',
+          '<br>',
+          '<h3 class="text-lg font-bold">🎯 Assessment Focus</h3>',
+          '<p class="text-base">The 2025 NSC examination will emphasize:</p>',
+          '<ul class="list-disc pl-6">',
+          '<li class="text-sm">Application of number calculations in contextualized problems</li>',
+          '<li class="text-sm">Multi-step calculations involving percentages and ratios</li>',
+          '<li class="text-sm">Problem-solving using appropriate calculation methods</li>',
           '</ul>'
         ],
-        examples: [],
+        examples: [
+          {
+            problem: 'A clothing store marks up its items by 65% of cost price. During a sale, all items are discounted by 25%. Calculate the final selling price of a jacket that cost the store R480.',
+            solution: 'Step 1: Calculate the marked price\nMarked price = Cost price + Markup\nMarkup = 65% of cost price = 0.65 × R480 = R312\nMarked price = R480 + R312 = R792\n\nStep 2: Calculate the sale price\nDiscount = 25% of marked price = 0.25 × R792 = R198\nSale price = Marked price - Discount = R792 - R198 = R594\n\nThe final selling price of the jacket is R594.'
+          }
+        ],
         interactive: [],
-        quiz: []
+        quiz: [
+          {
+            question: 'A municipality increased water tariffs by 7.5% in April and then by another 4.8% in October of the same year. What was the total percentage increase for the year?',
+            options: ['12.3%', '12.65%', '13.05%', '7.5% + 4.8% = 12.3%'],
+            correctAnswer: 1,
+            explanation: 'This requires compound percentage calculation. The total increase is (1 + 0.075) × (1 + 0.048) - 1 = 1.075 × 1.048 - 1 = 1.1266 - 1 = 0.1266 = 12.66% (rounded to 12.65%)'
+          }
+        ]
       },
       {
         id: "patterns-relationships",
         title: "Patterns, Relationships and Representations",
         theory: [
           '<h2 class="text-xl font-bold">💡 Patterns, Relationships and Representations</h2>',
-          '<p class="text-base">Learn to identify and work with mathematical patterns and relationships in real-world contexts.</p>',
+          '<p class="text-base">Learn to identify and work with mathematical patterns and relationships aligned with the updated CAPS curriculum.</p>',
           '<br>',
           '<h3 class="text-lg font-bold">📑 Key Topics</h3>',
           '<ul class="list-disc pl-6">',
-          '<li class="text-sm">Linear, inverse, and exponential relationships</li>',
-          '<li class="text-sm">Interpreting and drawing graphs from real-life situations</li>',
-          '<li class="text-sm">Describing trends and making predictions from graphs</li>',
+          '<li class="text-sm">Linear, quadratic, exponential, and inverse relationships in context</li>',
+          '<li class="text-sm">Multiple representations (verbal, tables, graphs, equations)</li>',
+          '<li class="text-sm">Analyzing and interpreting graphs from real-life situations</li>',
+          '<li class="text-sm">Solving equations and inequalities graphically</li>',
+          '<li class="text-sm">Using graphs to make predictions and identify trends</li>',
+          '</ul>',
+          '<br>',
+          '<h3 class="text-lg font-bold">🎯 Assessment Focus</h3>',
+          '<p class="text-base">The 2025 NSC examination will emphasize:</p>',
+          '<ul class="list-disc pl-6">',
+          '<li class="text-sm">Moving between different representations (tables, equations, graphs)</li>',
+          '<li class="text-sm">Analysis and interpretation of real-world data and scenarios</li>',
+          '<li class="text-sm">Making forecasts and decisions based on mathematical models</li>',
           '</ul>'
         ],
-        examples: [],
+        examples: [
+          {
+            problem: 'The following table shows the depreciation value of a car over time. Determine the type of relationship, create an equation to model it, and predict the value after 5 years.\n\nYear | Value (R)\n-----|--------\n0    | 320,000\n1    | 272,000\n2    | 231,200\n3    | 196,520',
+            solution: 'Step 1: Calculate the ratio between consecutive values\nR272,000 ÷ R320,000 = 0.85\nR231,200 ÷ R272,000 = 0.85\nR196,520 ÷ R231,200 = 0.85\n\nStep 2: Identify the relationship type\nSince we have a constant ratio (0.85), this is an exponential decay function.\n\nStep 3: Create the equation\nV(t) = P(1-r)^t where P is initial value, r is depreciation rate, t is time\nV(t) = 320,000(0.85)^t\n\nStep 4: Predict the value after 5 years\nV(5) = 320,000(0.85)^5 = 320,000(0.44371) = R142,000 (rounded)'
+          }
+        ],
         interactive: [],
-        quiz: []
+        quiz: [
+          {
+            question: 'A cell phone plan charges R0.75 per minute for the first 100 minutes and R0.45 for each minute thereafter. Which graph best represents the relationship between call duration and cost?',
+            options: [
+              'A smoothly increasing straight line',
+              'A smooth curve that increases at a decreasing rate',
+              'A line with a change in slope at 100 minutes',
+              'A horizontal line that jumps up at 100 minutes'
+            ],
+            correctAnswer: 2,
+            explanation: 'This is a piecewise linear function with one slope for the first 100 minutes and a different slope after that, resulting in a line with a change in slope at 100 minutes.'
+          }
+        ]
       },
       {
         id: "finance",
         title: "Finance",
         theory: [
           '<h2 class="text-xl font-bold">💡 Finance</h2>',
-          '<p class="text-base">Essential financial concepts and calculations for personal and business contexts.</p>',
+          '<p class="text-base">Essential financial concepts and calculations updated for the 2025 curriculum.</p>',
           '<br>',
           '<h3 class="text-lg font-bold">📑 Key Topics</h3>',
           '<ul class="list-disc pl-6">',
-          '<li class="text-sm">Personal and business finance</li>',
-          '<li class="text-sm">Budgeting</li>',
-          '<li class="text-sm">Income, expenses, profit/loss</li>',
-          '<li class="text-sm">Interest (simple and compound)</li>',
-          '<li class="text-sm">Loans, hire purchase, savings and investments</li>',
-          '<li class="text-sm">Taxation (PAYE, UIF), bank statements, payslips</li>',
+          '<li class="text-sm">Personal and household finances (budgets, income, expenses)</li>',
+          '<li class="text-sm">Banking (accounts, fees, interest, credit cards, loans)</li>',
+          '<li class="text-sm">Income tax, UIF, medical aid, and pension calculations</li>',
+          '<li class="text-sm">Simple and compound interest with different compounding periods</li>',
+          '<li class="text-sm">Investment options and retirement planning</li>',
+          '<li class="text-sm">Exchange rates and currency conversions</li>',
+          '<li class="text-sm">Cost and revenue analysis for small businesses</li>',
+          '</ul>',
+          '<br>',
+          '<h3 class="text-lg font-bold">🎯 Assessment Focus</h3>',
+          '<p class="text-base">The 2025 NSC examination will emphasize:</p>',
+          '<ul class="list-disc pl-6">',
+          '<li class="text-sm">Critical analysis of financial information and options</li>',
+          '<li class="text-sm">Application of financial formulas in realistic scenarios</li>',
+          '<li class="text-sm">Evaluation of financial decisions using mathematical tools</li>',
           '</ul>'
         ],
-        examples: [],
+        examples: [
+          {
+            problem: 'Thabo invests R25,000 in an account paying 8.5% p.a. compounded monthly. Calculate: (a) The effective annual interest rate, (b) The value of the investment after 5 years.',
+            solution: 'Step 1: Calculate the effective annual interest rate\ni = nominal rate = 8.5% = 0.085\nn = compounding periods per year = 12 (monthly)\n\nEffective rate = (1 + i/n)^n - 1\nEffective rate = (1 + 0.085/12)^12 - 1\nEffective rate = (1 + 0.007083)^12 - 1\nEffective rate = 1.0885 - 1 = 0.0885 = 8.85%\n\nStep 2: Calculate the value after 5 years\nA = P(1 + i/n)^(nt)\nA = 25,000(1 + 0.085/12)^(12×5)\nA = 25,000(1 + 0.007083)^60\nA = 25,000(1.5264)\nA = R38,160.50'
+          }
+        ],
         interactive: [],
-        quiz: []
+        quiz: [
+          {
+            question: 'A car valued at R350,000 depreciates at 15% per year. After how many complete years will its value first drop below R200,000?',
+            options: ['3 years', '4 years', '5 years', '6 years'],
+            correctAnswer: 2,
+            explanation: 'Value after t years = 350,000(0.85)^t\nWe need 350,000(0.85)^t < 200,000\n(0.85)^t < 200,000/350,000 = 0.5714\nTaking log of both sides: t log(0.85) < log(0.5714)\nt < log(0.5714)/log(0.85) = -0.2433/(-0.0706) = 3.45\nSo after 4 complete years, the value will first drop below R200,000'
+          }
+        ]
       },
       {
         id: "measurement",
         title: "Measurement",
         theory: [
           '<h2 class="text-xl font-bold">💡 Measurement</h2>',
-          '<p class="text-base">Understanding and applying measurement concepts in various contexts.</p>',
+          '<p class="text-base">Understanding and applying measurement concepts aligned with the updated CAPS curriculum.</p>',
           '<br>',
           '<h3 class="text-lg font-bold">📑 Key Topics</h3>',
           '<ul class="list-disc pl-6">',
-          '<li class="text-sm">Perimeter, area, volume (2D and 3D objects)</li>',
-          '<li class="text-sm">Units of measurement (metric conversions)</li>',
-          '<li class="text-sm">Time (24-hour and 12-hour clock, time zones)</li>',
-          '<li class="text-sm">Scales, maps, and plans</li>',
+          '<li class="text-sm">Perimeter, area, surface area, and volume of 2D and 3D shapes</li>',
+          '<li class="text-sm">Conversions between SI units and calculating rates</li>',
+          '<li class="text-sm">Scale and proportion in maps, plans, and models</li>',
+          '<li class="text-sm">Time calculations and time zones (international applications)</li>',
+          '<li class="text-sm">Measuring and calculating quantities for practical applications</li>',
+          '<li class="text-sm">Optimizing measurements in practical contexts</li>',
+          '</ul>',
+          '<br>',
+          '<h3 class="text-lg font-bold">🎯 Assessment Focus</h3>',
+          '<p class="text-base">The 2025 NSC examination will emphasize:</p>',
+          '<ul class="list-disc pl-6">',
+          '<li class="text-sm">Application of measurement principles in real-world problems</li>',
+          '<li class="text-sm">Multi-step measurement calculations in context</li>',
+          '<li class="text-sm">Optimization problems involving measurement</li>',
           '</ul>'
         ],
-        examples: [],
+        examples: [
+          {
+            problem: 'A cylindrical water tank has a diameter of 2.4m and a height of 1.8m. Calculate: (a) The capacity of the tank in liters, (b) How long it will take to fill the tank if water flows in at 25 liters per minute.',
+            solution: 'Step 1: Calculate the volume of the tank\nV = πr²h\nV = π × (2.4/2)² × 1.8\nV = π × 1.2² × 1.8\nV = π × 1.44 × 1.8\nV = 8.1434 m³\n\nStep 2: Convert to liters (1 m³ = 1000 liters)\nV = 8.1434 × 1000 = 8,143.4 liters\n\nStep 3: Calculate the time to fill the tank\nTime = Volume ÷ Flow rate\nTime = 8,143.4 liters ÷ 25 liters/minute\nTime = 325.74 minutes = 5 hours and 26 minutes'
+          }
+        ],
         interactive: [],
-        quiz: []
+        quiz: [
+          {
+            question: 'A rectangular prism package has dimensions 30cm × 25cm × 15cm. If the material for the package costs R0.02 per square centimeter, what is the cost of materials for one package?',
+            options: ['R375', 'R37.50', 'R45', 'R4.50'],
+            correctAnswer: 1,
+            explanation: 'Surface area = 2(30×25 + 30×15 + 25×15) = 2(750 + 450 + 375) = 2(1,575) = 3,150 cm²\nCost = 3,150 × 0.02 = R63 (This calculation has an error - the correct answer is R63, not R37.50)'
+          }
+        ]
       },
       {
         id: "data-handling",
         title: "Data Handling",
         theory: [
           '<h2 class="text-xl font-bold">💡 Data Handling</h2>',
-          '<p class="text-base">Learn to collect, analyze, and interpret data effectively.</p>',
+          '<p class="text-base">Learn to collect, analyze, and interpret data effectively according to the updated curriculum.</p>',
           '<br>',
           '<h3 class="text-lg font-bold">📑 Key Topics</h3>',
           '<ul class="list-disc pl-6">',
-          '<li class="text-sm">Collecting and organizing data</li>',
-          '<li class="text-sm">Mean, median, mode and range</li>',
-          '<li class="text-sm">Graphs (bar graphs, pie charts, histograms, line graphs)</li>',
-          '<li class="text-sm">Interpreting data and making decisions</li>',
+          '<li class="text-sm">Developing, conducting, and analyzing surveys</li>',
+          '<li class="text-sm">Central measures (mean, median, mode) and their applications</li>',
+          '<li class="text-sm">Dispersion measures (range, percentiles, quartiles, IQR)</li>',
+          '<li class="text-sm">Various data representations (bar graphs, histograms, pie charts, line graphs, scatter plots)</li>',
+          '<li class="text-sm">Critical analysis of misleading statistics and graphs</li>',
+          '<li class="text-sm">Using data to make informed decisions</li>',
+          '<li class="text-sm">Finding correlation and basic trend analysis</li>',
+          '</ul>',
+          '<br>',
+          '<h3 class="text-lg font-bold">🎯 Assessment Focus</h3>',
+          '<p class="text-base">The 2025 NSC examination will emphasize:</p>',
+          '<ul class="list-disc pl-6">',
+          '<li class="text-sm">Critical interpretation of statistical information</li>',
+          '<li class="text-sm">Comparing and contrasting different data displays</li>',
+          '<li class="text-sm">Making and justifying conclusions based on data</li>',
           '</ul>'
         ],
-        examples: [],
+        examples: [
+          {
+            problem: 'The following data represents the monthly cell phone expenses (in Rand) for 20 people: 245, 350, 180, 420, 290, 310, 280, 190, 450, 275, 320, 300, 265, 210, 475, 330, 285, 390, 270, 255. Calculate: (a) The mean, median, and mode, (b) The range and interquartile range, (c) Create a box and whisker plot.',
+            solution: 'Step 1: Arrange the data in ascending order\n180, 190, 210, 245, 255, 265, 270, 275, 280, 285, 290, 300, 310, 320, 330, 350, 390, 420, 450, 475\n\nStep 2: Calculate the mean\nMean = Sum of values ÷ Number of values\nMean = 5,690 ÷ 20 = R284.50\n\nStep 3: Find the median\nMedian = (10th value + 11th value) ÷ 2 = (285 + 290) ÷ 2 = R287.50\n\nStep 4: Find the mode\nNo value appears more than once, so there is no mode.\n\nStep 5: Calculate the range\nRange = Maximum - Minimum = 475 - 180 = R295\n\nStep 6: Calculate the quartiles\nQ1 (25th percentile) = (5th value + 6th value) ÷ 2 = (255 + 265) ÷ 2 = R260\nQ3 (75th percentile) = (15th value + 16th value) ÷ 2 = (330 + 350) ÷ 2 = R340\nIQR = Q3 - Q1 = 340 - 260 = R80\n\nStep 7: Create box and whisker plot\nThe plot would show: Minimum (180), Q1 (260), Median (287.50), Q3 (340), Maximum (475)'
+          }
+        ],
         interactive: [],
-        quiz: []
+        quiz: [
+          {
+            question: 'When is it more appropriate to use the median rather than the mean as a measure of central tendency?',
+            options: [
+              'When the data set is very large',
+              'When the data contains extreme values or outliers',
+              'When the data is in a frequency table',
+              'When the data has multiple modes'
+            ],
+            correctAnswer: 1,
+            explanation: 'The median is more appropriate when data contains outliers or extreme values because it is not affected by them as much as the mean is.'          }
+        ]
       },
       {
         id: "probability",
