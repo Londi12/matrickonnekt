@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
+import MobileResponsiveTabs from './MobileResponsiveTabs';
 
 // Dynamically import the plotting library to avoid SSR issues
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
@@ -324,10 +325,28 @@ export default function StudyPage() {
   const [activeTab, setActiveTab] = useState<"theory" | "examples" | "quiz">("theory");
   const [currentExample, setCurrentExample] = useState(0);
   const [completedLessons, setCompletedLessons] = useState<Set<number>>(new Set());
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const currentModule = mathModules.find((m) => m.id === activeModule)!;
   const currentLesson = currentModule.lessons[activeLesson];
+
+  useEffect(() => {
+    const checkMobileView = () => {
+      setIsMobileView(window.innerWidth < 1024);
+    };
+    
+    checkMobileView();
+    window.addEventListener('resize', checkMobileView);
+    return () => window.removeEventListener('resize', checkMobileView);
+  }, []);
+
+  const tabs = [
+    { id: "theory", label: "Theory" },
+    { id: "examples", label: "Examples" },
+    { id: "quiz", label: "Quiz" },
+  ];
 
   const handleNextExample = () => {
     if (
@@ -362,40 +381,169 @@ export default function StudyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">      <div className="flex h-full">
-        {/* Left Column - Menu Sidebar */}
-        <div className="w-full md:w-72 min-h-screen bg-gradient-to-b from-blue-600 to-indigo-600 p-4 text-white fixed md:static -left-full md:left-0 top-16 overflow-visible transform transition-transform duration-300 ease-in-out z-50">
-          <div className="mb-4 flex justify-between items-center">
-            <div>
-              <h1 className="text-base font-bold mb-1">Grade 12 Mathematics</h1>
-              <p className="text-xs text-white/60">CAPS Curriculum</p>
-            </div>
-            <button 
-              className="md:hidden rounded-full p-2 hover:bg-white/10"
-              onClick={() => {/* Add toggle functionality */}}
-            >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Mobile Menu Toggle */}
+      {isMobileView && (
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="fixed top-4 left-4 z-50 p-2 bg-blue-600 rounded-md text-white lg:hidden"
+        >
+          {isMenuOpen ? (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </button>
+      )}
 
-          <nav className="space-y-1 relative">
-            {mathModules.map((module) => (
-              <div key={module.id} className="rounded-lg mb-2 relative">
-                <button
-                  onClick={() => toggleModule(module.id)}
-                  className={`w-full flex items-center justify-between p-3 text-left transition-colors rounded-lg ${
-                    expandedModule === module.id
-                      ? "bg-white/20 text-white font-medium"
-                      : "hover:bg-white/10"
-                  }`}
+      <div className="flex flex-col lg:flex-row h-full">
+        {/* Sidebar */}
+        <div className={`
+          w-full lg:w-72 min-h-screen bg-gradient-to-b from-blue-600 to-indigo-600 
+          fixed lg:static inset-0 
+          transform transition-transform duration-300 ease-in-out z-40
+          ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'} 
+          lg:translate-x-0
+          overflow-y-auto custom-scrollbar
+        `}>
+          <div className="p-4 text-white">
+            <div className="mb-4 flex justify-between items-center">
+              <div>
+                <h1 className="text-base font-bold mb-1">Grade 12 Mathematics</h1>
+                <p className="text-xs text-white/60">CAPS Curriculum</p>
+              </div>
+              {isMobileView && (
+                <button 
+                  onClick={() => setIsMenuOpen(false)}
+                  className="lg:hidden p-2 hover:bg-white/10 rounded-full"
                 >
-                  <span className="text-sm font-medium">{module.title}</span>
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            {/* Module navigation */}
+            <nav className="space-y-1">
+              {mathModules.map((module) => (
+                <div key={module.id} className="rounded-lg mb-2">
+                  <button
+                    onClick={() => toggleModule(module.id)}
+                    className={`w-full flex items-center justify-between p-3 text-left transition-colors rounded-lg 
+                      ${expandedModule === module.id ? 'bg-white/20 text-white font-medium' : 'hover:bg-white/10'}`}
+                  >
+                    <span className="text-sm">{module.title}</span>
+                    <svg
+                      className={`w-4 h-4 transform transition-transform ${expandedModule === module.id ? 'rotate-90' : ''}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+
+                  {/* Lesson list */}
+                  <div className={`
+                    mt-1 ml-4 space-y-1 transition-all duration-200
+                    ${expandedModule === module.id ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}
+                  `}>
+                    {module.lessons.map((lesson, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          setActiveModule(module.id);
+                          setActiveLesson(index);
+                          setIsMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center text-left px-3 py-2 rounded-lg text-sm transition-colors
+                          ${activeModule === module.id && activeLesson === index
+                            ? 'bg-blue-700/50 font-medium'
+                            : 'hover:bg-white/10'
+                          }`}
+                      >
+                        <span className="w-5 h-5 flex items-center justify-center rounded-full bg-white/10 mr-2 text-xs">
+                          {index + 1}
+                        </span>
+                        <span className="text-xs line-clamp-1">{lesson.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </nav>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 lg:ml-72">
+          <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+            {/* Content header with responsive padding for mobile menu button */}
+            <div className="pt-16 lg:pt-0">
+              <div className="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+                <span>{currentModule.title}</span>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="font-medium text-gray-900">
+                  {currentModule.lessons[activeLesson]?.title || "Lesson"}
+                </span>
+              </div>
+
+              {currentModule.lessons.length > 0 ? (
+                <div className="content-wrapper">
+                  {/* Mobile-friendly tabs */}
+                  <MobileResponsiveTabs
+                    tabs={[
+                      { id: "theory", label: "Theory" },
+                      { id: "examples", label: "Examples" },
+                      { id: "quiz", label: "Quiz" }
+                    ]}
+                    activeTab={activeTab}
+                    onTabChange={(tabId) => setActiveTab(tabId as "theory" | "examples" | "quiz")}
+                  />
+
+                  {/* Content area with mobile padding adjustment */}
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 min-h-[calc(100vh-16rem)] overflow-y-auto">
+                    <div className="p-4 lg:p-6">
+                      {activeTab === "theory" && (
+                        <Theory content={currentLesson.theory || []} />
+                      )}
+
+                      {activeTab === "examples" && (
+                        <Examples
+                          examples={currentLesson.examples || []}
+                          currentExample={currentExample}
+                          showSolution={showSolution}
+                          onShowSolution={(index) =>
+                            setShowSolution({
+                              ...showSolution,
+                              [index]: !showSolution[index],
+                            })
+                          }
+                          onNext={handleNextExample}
+                          onPrev={handlePrevExample}
+                        />
+                      )}
+
+                      {activeTab === "quiz" && (
+                        <Quiz
+                          questions={currentLesson.quiz || []}
+                          onComplete={handleQuizComplete}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl shadow-sm p-8 text-center border border-gray-100">
                   <svg
-                    className={`w-4 h-4 transform transition-transform ${
-                      expandedModule === module.id ? "rotate-90" : ""
-                    }`}
+                    className="w-16 h-16 text-gray-400 mx-auto mb-4"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -404,192 +552,19 @@ export default function StudyPage() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M9 5l7 7-7 7"
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                     />
                   </svg>
-                </button>
-
-                {/* Module Lessons */}
-                <div
-                  className={`fixed z-50 left-[17rem] top-auto mt-[-2.5rem] bg-indigo-700/95 backdrop-blur-sm rounded-lg shadow-xl overflow-hidden transition-all duration-300 ease-in-out ${
-                    expandedModule === module.id ? "w-[280px] opacity-100" : "w-0 opacity-0 pointer-events-none"
-                  }`}
-                >
-                  <div className="py-3 px-4">
-                    <div className="flex items-center mb-3 border-b border-indigo-600 pb-2">
-                      <span className="text-sm font-medium text-white">{module.title}</span>
-                    </div>
-                    
-                    <div className="space-y-1 max-h-[60vh] overflow-y-auto pr-1">
-                    {module.lessons.length > 0 ? (
-                      module.lessons.map((lesson, index) => (
-                        <button
-                          key={`lesson-${module.id}-${index}`}
-                          onClick={() => {
-                            setActiveModule(module.id);
-                            setActiveLesson(index);
-                            toggleModule(""); // Close after selection
-                          }}
-                          className={`w-full flex items-center text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                            activeModule === module.id && activeLesson === index
-                              ? "bg-blue-700/50 font-medium"
-                              : "hover:bg-white/10"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between w-full">
-                            <div className="flex items-center">
-                              <span className="w-5 h-5 flex items-center justify-center rounded-full bg-white/10 mr-2 text-xs">
-                                {index + 1}
-                              </span>
-                              <span className="text-xs line-clamp-2">{lesson.title}</span>
-                            </div>
-                            {completedLessons.has(index) && (
-                              <svg
-                                className="w-3 h-3 text-green-400 ml-2 flex-shrink-0"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                            )}
-                          </div>
-                        </button>
-                      ))
-                    ) : (
-                      <div className="text-white/50 text-xs px-3 py-1.5">
-                        Content coming soon
-                      </div>
-                    )}
-                    </div>
-                  </div>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                    Content Coming Soon
+                  </h2>
+                  <p className="text-gray-500">
+                    We're currently working on creating engaging content for this
+                    module. Check back soon for updates!
+                  </p>
                 </div>
-              </div>
-            ))}
-          </nav>
-        </div>
-
-        {/* Right Column - Content Area */}
-        <div className="flex-1 ml-72">
-          <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-            {/* Breadcrumb Navigation */}
-            <div className="mb-4">
-              <div className="flex items-center space-x-2 text-sm text-gray-500">
-                <span>{currentModule.title}</span>
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-                <span className="font-medium text-gray-900">
-                  {currentModule.lessons[activeLesson]?.title || "Lesson"}
-                </span>
-              </div>
+              )}
             </div>
-
-            {currentModule.lessons.length > 0 ? (
-              <>
-                {/* Modern Horizontal Scrollable Menu */}
-                <div className="relative mb-4">
-                  <div
-                    className="flex space-x-2 overflow-x-auto pb-2"
-                    ref={scrollContainerRef}
-                  >
-                    {[
-                      { id: "theory", label: "Theory" },
-                      { id: "examples", label: "Examples" },
-                      { id: "quiz", label: "Quiz" },
-                    ].map((tab) => (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id as "theory" | "examples" | "quiz")}
-                        className={`px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
-                          activeTab === tab.id
-                            ? "bg-blue-600 text-white shadow-sm"
-                            : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none" />
-                </div>
-
-                {/* Divider Line */}
-                <div className="border-b border-gray-200 mb-4" />
-
-                {/* Content Area */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-[calc(100vh-16rem)] overflow-y-auto">
-                  {activeTab === "theory" && (
-                    <Theory content={currentLesson.theory || []} />
-                  )}
-
-                  {activeTab === "examples" && (
-                    <div className="p-6">
-                      <Examples
-                        examples={currentLesson.examples || []}
-                        currentExample={currentExample}
-                        showSolution={showSolution}
-                        onShowSolution={(index) =>
-                          setShowSolution({
-                            ...showSolution,
-                            [index]: !showSolution[index],
-                          })
-                        }
-                        onNext={handleNextExample}
-                        onPrev={handlePrevExample}
-                      />
-                    </div>
-                  )}
-
-                  {activeTab === "quiz" && (
-                    <div className="p-6">
-                      <Quiz 
-                        questions={currentLesson.quiz || []} 
-                        onComplete={handleQuizComplete}
-                      />
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className="bg-white rounded-xl shadow-sm p-8 text-center border border-gray-100">
-                <svg
-                  className="w-16 h-16 text-gray-400 mx-auto mb-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  Content Coming Soon
-                </h2>
-                <p className="text-gray-500">
-                  We're currently working on creating engaging content for this
-                  module. Check back soon for updates!
-                </p>
-              </div>
-            )}
           </div>
         </div>
       </div>
