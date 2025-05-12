@@ -24,29 +24,19 @@ export default function AdminResourcesPage() {
       fetchResources();
     }
   }, [filter, isAdmin]);
-
   const checkAdminStatus = async () => {
     if (!user) {
       router.push('/login');
       return;
     }
 
-    try {
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      const userData = userDoc.data();
-
-      if (!userData?.isAdmin) {
-        toast.error('You do not have permission to access this page');
-        router.push('/');
-        return;
-      }
-
-      setIsAdmin(true);
-    } catch (error) {
-      console.error('Error checking admin status:', error);
-      toast.error('Failed to verify admin status');
+    if (!user.isAdmin) {
+      toast.error('You do not have permission to access this page');
       router.push('/');
+      return;
     }
+
+    setIsAdmin(true);
   };
   const fetchResources = async () => {
     try {

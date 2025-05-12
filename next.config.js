@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,  images: {
+  reactStrictMode: true,
+  images: {
     domains: [],
   },
   // Ensure proper static file serving
