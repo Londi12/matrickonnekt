@@ -1,13 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  pageExtensions: ['ts', 'tsx', 'js', 'jsx'],
+  experimental: {
+    optimizeCss: true,
+  },
   images: {
     domains: [],
   },
-  // Ensure proper static file serving
   poweredByHeader: false,
   compress: true,
-  // Add proper headers for static files
   async headers() {
     return [
       {
