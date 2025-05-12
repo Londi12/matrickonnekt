@@ -4,6 +4,7 @@ const nextConfig = {
   pageExtensions: ['ts', 'tsx', 'js', 'jsx'],
   experimental: {
     optimizeCss: true,
+    appDir: true,
   },
   images: {
     domains: [],
