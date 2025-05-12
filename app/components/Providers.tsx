@@ -2,6 +2,7 @@
 
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '../context/AuthContext';
+import { CalculatorProvider } from '../context/CalculatorContext';
 import ErrorBoundary from './ErrorBoundary';
 import { useEffect } from 'react';
 import { initializeLocalAuth } from '../utils/init';
@@ -24,9 +25,11 @@ export default function Providers({
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <Toaster position="top-right" />
-        {children}
+        <CalculatorProvider>
+          <Toaster position="top-right" />
+          {children}
+        </CalculatorProvider>
       </AuthProvider>
     </ErrorBoundary>
   );
-} 
+}
