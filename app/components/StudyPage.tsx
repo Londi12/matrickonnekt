@@ -355,9 +355,8 @@ export default function StudyPage() {
       setShowSolution({});
     }
   };
-
   const handleQuizComplete = (score: number) => {
-    if (score === currentLesson.quiz.length) {
+    if (currentLesson?.quiz && score === currentLesson.quiz.length) {
       setCompletedLessons(new Set([...Array.from(completedLessons), activeLesson]));
     }
   };
