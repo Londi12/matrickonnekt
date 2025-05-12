@@ -5,13 +5,12 @@ import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
 
-export default function Navbar() {
+const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close profile menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
@@ -203,3 +202,17 @@ export default function Navbar() {
                 </Link>
                 <Link 
                   href="/login?signup=true" 
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+                >
+                  Create account
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </nav>
+  );
+};
+
+export default Navbar;
