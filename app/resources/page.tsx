@@ -317,32 +317,34 @@ export default function ResourcesPage() {
 
               <div className="mt-8">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Available Resources</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {filteredResources.map((resource) => (
-                    <div key={resource.id} className="bg-white rounded-lg shadow-sm border p-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="text-lg font-medium text-gray-900">{resource.title}</h3>
-                          <p className="mt-1 text-sm text-gray-500">{resource.description}</p>
+                    <div key={resource.id} className="bg-white rounded-lg shadow-sm border p-4 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-medium text-gray-900 line-clamp-1">{resource.title}</h3>
+                            <p className="mt-1 text-sm text-gray-500 line-clamp-2">{resource.description}</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="mt-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {resource.subject}
-                        </span>
-                        <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          {resource.category}
-                        </span>
+                        <div className="mt-4">
+                          <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mb-1 sm:mb-0 sm:inline-flex sm:items-center">
+                            {resource.subject}
+                          </span>
+                          <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 ml-0 mt-1 sm:mt-0 sm:ml-2">
+                            {resource.category}
+                          </span>
+                        </div>
                       </div>
                       <div className="mt-4 flex justify-end">
                         <a
                           href={resource.downloadUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200"
+                          className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 touch-target"
                         >
                           <DocumentArrowDownIcon className="h-4 w-4 mr-1" />
-                          Download
+                          <span className="min-w-[70px]">Download</span>
                         </a>
                       </div>
                     </div>

@@ -24,9 +24,24 @@ module.exports = {
           900: '#0c4a6e',
         },
       },
+      spacing: {
+        'safe-top': 'env(safe-area-inset-top)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+      },
+      minHeight: {
+        'touch': '44px',
+      },
+      minWidth: {
+        'touch': '44px',
+      }
+    },
+  },
+  variants: {
+    extend: {
+      touchAction: ['hover', 'focus'],
     },
   },
   plugins: [
     require('@tailwindcss/forms'),
   ],
-} 
+}

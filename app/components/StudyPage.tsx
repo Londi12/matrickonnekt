@@ -362,13 +362,22 @@ export default function StudyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="flex h-full">
+    <div className="min-h-screen bg-gray-50">      <div className="flex h-full">
         {/* Left Column - Menu Sidebar */}
-        <div className="w-72 min-h-screen bg-gradient-to-b from-blue-600 to-indigo-600 p-4 text-white fixed left-0 top-16 overflow-visible">
-          <div className="mb-4">
-            <h1 className="text-base font-bold mb-1">Grade 12 Mathematics</h1>
-            <p className="text-xs text-white/60">CAPS Curriculum</p>
+        <div className="w-full md:w-72 min-h-screen bg-gradient-to-b from-blue-600 to-indigo-600 p-4 text-white fixed md:static -left-full md:left-0 top-16 overflow-visible transform transition-transform duration-300 ease-in-out z-50">
+          <div className="mb-4 flex justify-between items-center">
+            <div>
+              <h1 className="text-base font-bold mb-1">Grade 12 Mathematics</h1>
+              <p className="text-xs text-white/60">CAPS Curriculum</p>
+            </div>
+            <button 
+              className="md:hidden rounded-full p-2 hover:bg-white/10"
+              onClick={() => {/* Add toggle functionality */}}
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
 
           <nav className="space-y-1 relative">
