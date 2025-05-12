@@ -53,16 +53,16 @@ export default function Navbar() {
               Study
             </Link>
             <Link 
-              href="/practice" 
-              className="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 hover:scale-105"
-            >
-              Practice
-            </Link>
-            <Link 
               href="/resources" 
               className="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 hover:scale-105"
             >
               Resources
+            </Link>
+            <Link
+              href="/mock-exam"
+              className="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 hover:scale-105"
+            >
+              Mock Exams
             </Link>
             
             {/* Profile Icon with Dropdown */}
@@ -161,16 +161,16 @@ export default function Navbar() {
               Study
             </Link>
             <Link 
-              href="/practice" 
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50"
-            >
-              Practice
-            </Link>
-            <Link 
               href="/resources" 
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50"
             >
               Resources
+            </Link>
+            <Link 
+              href="/mock-exam" 
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+            >
+              Mock Exams
             </Link>
             {user ? (
               <>
@@ -203,15 +203,3 @@ export default function Navbar() {
                 </Link>
                 <Link 
                   href="/login?signup=true" 
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50"
-                >
-                  Create account
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-    </nav>
-  );
-} 

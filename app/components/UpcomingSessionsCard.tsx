@@ -16,22 +16,18 @@ export default function UpcomingSessionsCard({ userProgress }: UpcomingSessionsC
   // Generate recommended sessions based on the user's activity and incomplete topics
   const generateRecommendedSessions = () => {
     const sessions = [];
-    
-    // Check which subjects need attention by looking at least recently studied
-    const subjectEntries = Object.entries(userProgress.subjects || {});
-    if (subjectEntries.length > 0) {
-      // Sort by lastStudied date (oldest first)
-      const sortedSubjects = subjectEntries.sort((a, b) => {
-        const dateA = new Date(a[1].lastStudied).getTime();
-        const dateB = new Date(b[1].lastStudied).getTime();
-        return dateA - dateB;
-      });
-      
-      // Take the top 2 subjects that need attention
-      for (let i = 0; i < Math.min(2, sortedSubjects.length); i++) {
-        const [subjectName, subject] = sortedSubjects[i];
+
+    if (userProgress?.subjects) {
+      // Convert subjects to an array and sort by last activity
+      const subjectEntries = Object.entries(userProgress.subjects)
+        .map(([id, data]) => ({ id, ...data }))
+        .sort((a, b) => (b.lastActivity?.getTime() || 0) - (a.lastActivity?.getTime() || 0));
+
+      // Take the top 3 subjects
+      for (let i = 0; i < Math.min(3, subjectEntries.length); i++) {
+        const subjectName = subjectEntries[i].id;
         sessions.push({
-          id: `spaced-${i}`,
+          id: `review-${i + 1}`,
           title: `Review ${subjectName}`,
           description: 'Spaced repetition review to improve retention',
           date: new Date(Date.now() + 86400000 * (i + 1)), // Tomorrow + i days
@@ -40,16 +36,6 @@ export default function UpcomingSessionsCard({ userProgress }: UpcomingSessionsC
         });
       }
     }
-    
-    // Add a session for practice
-    sessions.push({
-      id: 'practice-1',
-      title: 'Practice Quiz',
-      description: 'Test your knowledge with practice questions',
-      date: new Date(Date.now() + 172800000), // 2 days from now
-      link: '/practice',
-      icon: <ClockIcon className="h-5 w-5 text-green-600" />
-    });
     
     return sessions;
   };
