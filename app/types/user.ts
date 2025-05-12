@@ -30,6 +30,7 @@ export interface StudyActivity {
   lessonId?: string;
   lessonTitle?: string;
   score?: number;
+  duration?: number; // duration in minutes
 }
 
 export interface UserStats {
