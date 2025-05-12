@@ -1,10 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Box, Typography, Paper, Grid, Button, CircularProgress } from '@mui/material';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import DescriptionIcon from '@mui/icons-material/Description';
-import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import { CloudUpload as CloudUploadIcon } from '@mui/icons-material';
+import { Description as DescriptionIcon } from '@mui/icons-material';
+import { VideoLibrary as VideoLibraryIcon } from '@mui/icons-material';
+import { PictureAsPdf as PictureAsPdfIcon } from '@mui/icons-material';
 
 const Resources = () => {
   const [files, setFiles] = useState([]);

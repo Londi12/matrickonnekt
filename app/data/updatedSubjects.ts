@@ -1,4 +1,4 @@
-import { Subject, Module, Lesson } from '../types';
+import { Subject, Module } from '../types';
 
 /**
  * Updated subjects data based on WCED ePortal Grade 12 subject support resources

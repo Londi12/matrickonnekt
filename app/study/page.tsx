@@ -65,6 +65,29 @@ import {
 import SignInModal from '../components/SignInModal';
 import { getUserProgress } from '../utils/userProgress';
 
+interface Lesson {
+  id: string;
+  title: string;
+  description: string;
+  content: string;
+  difficulty: string;
+  duration: number;
+  topics: string[];
+  lessonId?: string;
+}
+
+interface Topic {
+  id: string;
+  name: string;
+  lessons: Lesson[];
+}
+
+interface Subject {
+  id: string;
+  name: string;
+  topics: Topic[];
+}
+
 // Transform the subject modules to match the existing structure for compatibility
 const subjects = updatedSubjects.map(subject => ({
   id: subject.id,
@@ -154,9 +177,9 @@ const StudyPage = () => {
     }
 
     // Find the lesson to get its title
-    const subject = subjects.find(s => s.id === subjectId);
-    const topic = subject?.topics.find(t => t.id === topicId);
-    const lesson = topic?.lessons.find(l => l.id === lessonId);
+    const subject: Subject | undefined = subjects.find(s => s.id === subjectId);
+    const topic: Topic | undefined = subject?.topics.find((t: Topic) => t.id === topicId);
+    const lesson: Lesson | undefined = topic?.lessons.find((l: Lesson) => l.id === lessonId);
 
     // Set the active lesson
     setSelectedLesson(lessonId);
@@ -214,11 +237,11 @@ const StudyPage = () => {
     alert('Notes saved successfully!');
   };
 
-  const getFilteredTopics = (subject: any) => {
-    return subject.topics.filter((topic: any) => 
+  const getFilteredTopics = (subject: Subject) => {
+    return subject.topics.filter((topic: Topic) => 
       !searchQuery || 
       topic.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      topic.lessons.some((lesson: any) => 
+      topic.lessons.some((lesson: Lesson) => 
         lesson.title.toLowerCase().includes(searchQuery.toLowerCase())
       )
     );
@@ -226,13 +249,13 @@ const StudyPage = () => {
   const getActiveLessonContent = () => {
     if (!selectedLesson) return null;
     
-    const subject = subjects.find(s => s.id === selectedSubjects[0]);
+    const subject: Subject | undefined = subjects.find(s => s.id === selectedSubjects[0]);
     if (!subject) return null;
 
-    const topic = subject.topics.find((t: any) => t.id === selectedTopic);
+    const topic: Topic | undefined = subject.topics.find((t: Topic) => t.id === selectedTopic);
     if (!topic) return null;
 
-    const lesson = topic.lessons.find((l: any) => l.id === selectedLesson);
+    const lesson: Lesson | undefined = topic.lessons.find((l: Lesson) => l.id === selectedLesson);
     if (!lesson) return null;
 
     console.log('Rendering lesson:', { subject: subject.id, topic: topic.id, lesson: lesson.id });

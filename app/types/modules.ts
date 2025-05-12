@@ -1,20 +1,23 @@
-export interface Example {
-  problem: string;
-  solution: string;
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation: string;
 }
 
-export interface Interactive {
-  type: string;
-  data: any;
-}
-
-export interface Lesson {
+export interface LessonContent {
   id: string;
   title: string;
-  theory?: string[];
-  examples?: Example[];
-  interactive?: Interactive[];
-  quiz?: any[];
+  theory: string[];
+  examples: Array<{
+    problem: string;
+    solution: string;
+  }>;
+  interactive: Array<{
+    type: string;
+    data: any;
+  }>;
+  quiz: QuizQuestion[];
 }
 
 export interface Module {
@@ -23,5 +26,5 @@ export interface Module {
   description: string;
   icon: string;
   progress: number;
-  lessons: Lesson[];
+  lessons: LessonContent[];
 }

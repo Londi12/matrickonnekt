@@ -8,6 +8,11 @@ export interface QuizQuestion {
 export interface LessonContent {
   id: string;
   title: string;
+  description?: string;
+  content?: string;
+  difficulty?: string;
+  duration?: number;
+  topics?: string[];
   theory: string[];
   examples: Array<{
     problem: string;
@@ -27,4 +32,25 @@ export interface Module {
   icon: string;
   progress: number;
   lessons: LessonContent[];
-} 
+}
+
+export interface Subject {
+  id: string;
+  name: string;
+  description: string;
+  iconUrl: string;
+  modules: {
+    id: string;
+    name: string;
+    description: string;
+    lessons: Array<{
+      id: string;
+      title: string;
+      description: string;
+      content: string;
+      difficulty: string;
+      duration: number;
+      topics: string[];
+    }>;
+  }[];
+}

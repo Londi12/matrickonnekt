@@ -10,7 +10,7 @@ import MockExam from '../components/mock-exam/MockExam';
 import MockExamResult from '../components/mock-exam/MockExamResult';
 import SignInModal from '../components/mock-exam/SignInModal';
 import { MockPaper, UserMockExamResult } from '../types/mockExam';
-import { mockPapers } from '../data/mockExamData';
+import { mockPapers as availableMockPapers } from '../data/mockExamData';
 import { Tab } from '@headlessui/react';
 import { 
   ClockIcon, 
@@ -367,7 +367,7 @@ const problemSets = [
   }
 ];
 
-const mockPapers: MockPaper[] = [
+const customMockPapers: MockPaper[] = [
   {
     id: 'math-2024-p1',
     subject: 'Mathematics',
@@ -487,7 +487,7 @@ export default function PracticePage() {
   };
 
   const handleStartExam = (paperId: string, timed: boolean) => {
-    const paper = mockPapers.find(p => p.id === paperId);
+    const paper = availableMockPapers.find(p => p.id === paperId);
     if (!user) {
       setIsAuthModalOpen(true);
       return;
@@ -735,7 +735,7 @@ export default function PracticePage() {
             <Tab.Panels>
               <Tab.Panel>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {mockPapers.map((paper) => (
+                  {availableMockPapers.map((paper) => (
                     <MockPaperCard
                       key={paper.id}
                       paper={paper}
