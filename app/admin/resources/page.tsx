@@ -2,28 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { collection, query, where, getDocs, updateDoc, doc, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase/config';
 import { toast } from 'react-hot-toast';
 import Navbar from '../../components/Navbar';
 import { useRouter } from 'next/navigation';
-
-interface Resource {
-  id: string;
-  title: string;
-  description: string;
-  subject: string;
-  category: string;
-  fileName: string;
-  fileSize: number;
-  fileType: string;
-  downloadUrl: string;
-  uploadedBy: string;
-  uploadedByName: string;
-  uploadedAt: any;
-  approved: boolean;
-  status: string;
-}
+import { Resource, getResources, updateResource } from '../../services/resourceService';
 
 export default function AdminResourcesPage() {
   const { user } = useAuth();
@@ -66,19 +48,11 @@ export default function AdminResourcesPage() {
       router.push('/');
     }
   };
-
   const fetchResources = async () => {
     try {
-      const resourcesRef = collection(db, 'resources');
-      const q = query(resourcesRef, where('status', '==', filter));
-      const querySnapshot = await getDocs(q);
-      
-      const resourcesData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Resource[];
-      
-      setResources(resourcesData);
+      const allResources = getResources();
+      const filteredResources = allResources.filter(resource => resource.status === filter);
+      setResources(filteredResources);
     } catch (error) {
       console.error('Error fetching resources:', error);
       toast.error('Failed to fetch resources');
@@ -89,11 +63,10 @@ export default function AdminResourcesPage() {
 
   const handleApprove = async (resourceId: string) => {
     try {
-      const resourceRef = doc(db, 'resources', resourceId);
-      await updateDoc(resourceRef, {
+      updateResource(resourceId, {
         approved: true,
         status: 'approved',
-        approvedAt: new Date(),
+        approvedAt: new Date().toISOString(),
         approvedBy: user?.uid
       });
       
@@ -107,11 +80,10 @@ export default function AdminResourcesPage() {
 
   const handleReject = async (resourceId: string) => {
     try {
-      const resourceRef = doc(db, 'resources', resourceId);
-      await updateDoc(resourceRef, {
+      updateResource(resourceId, {
         approved: false,
         status: 'rejected',
-        rejectedAt: new Date(),
+        rejectedAt: new Date().toISOString(),
         rejectedBy: user?.uid
       });
       
