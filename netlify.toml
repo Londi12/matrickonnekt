@@ -1,5 +1,5 @@
 [build]
-  command = "npm run build"
+  command = "npm ci && npm run build"
   publish = ".next"
 
 [[plugins]]
@@ -7,7 +7,14 @@
 
 [build.environment]
   NEXT_TELEMETRY_DISABLED = "1"
+  NODE_VERSION = "18"
+  NPM_VERSION = "9"
 
 [functions]
   external_node_modules = ["@firebase/database"]
   included_files = ["app/config/firebase.ts"]
+
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    cache-control = "public, max-age=31536000, immutable"
