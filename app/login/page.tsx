@@ -16,7 +16,10 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (user) {
-      router.push('/dashboard');
+      // Check if there's a redirect URL in the query parameters
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get('redirect');
+      router.push(redirect || '/dashboard');
     }
   }, [user, router]);
 
