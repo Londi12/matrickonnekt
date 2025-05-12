@@ -1,7 +1,5 @@
 'use client';
 
-import ClientCalculator from './components/ClientCalculator';
-
 export default function Template({
   children,
 }: {
@@ -10,7 +8,6 @@ export default function Template({
   return (
     <>
       {children}
-      <ClientCalculator />
     </>
   );
-} 
+}
