@@ -27,6 +27,7 @@ export default function FlashcardsPage() {
 
   // Sample flashcards data - In a real app, this would come from your backend
   const sampleFlashcards = [
+    // Mathematics flashcards
     {
       id: '1',
       subject: 'Mathematics',
@@ -47,6 +48,56 @@ export default function FlashcardsPage() {
       topic: 'Calculus',
       front: 'What is a derivative?',
       back: 'The rate of change of a function with respect to a variable'
+    },
+    // Physical Sciences - Rates & Equilibrium flashcards
+    {
+      id: '4',
+      subject: 'Physical Sciences',
+      topic: 'Rates & Equilibrium',
+      front: 'What are the four main factors affecting reaction rates?',
+      back: 'Temperature\nConcentration\nSurface area\nCatalysts'
+    },
+    {
+      id: '5',
+      subject: 'Physical Sciences',
+      topic: 'Rates & Equilibrium',
+      front: 'Define dynamic equilibrium',
+      back: 'A state where:\n- Forward and reverse reactions occur simultaneously\n- Rates of forward and reverse reactions are equal\n- Concentrations of reactants and products remain constant'
+    },
+    {
+      id: '6',
+      subject: 'Physical Sciences',
+      topic: 'Rates & Equilibrium',
+      front: 'How does increasing temperature affect an endothermic reaction at equilibrium?',
+      back: 'The equilibrium shifts to favor the endothermic direction, increasing product formation'
+    },
+    {
+      id: '7',
+      subject: 'Physical Sciences',
+      topic: 'Rates & Equilibrium',
+      front: 'What is Le Chatelier\'s principle?',
+      back: 'When a system at equilibrium is disturbed, it shifts to counteract the change'
+    },
+    {
+      id: '8',
+      subject: 'Physical Sciences',
+      topic: 'Rates & Equilibrium',
+      front: 'How does a catalyst affect equilibrium position?',
+      back: 'A catalyst does not affect the equilibrium position. It only speeds up both forward and reverse reactions equally'
+    },
+    {
+      id: '9',
+      subject: 'Physical Sciences',
+      topic: 'Rates & Equilibrium',
+      front: 'What is Kc?',
+      back: 'The equilibrium constant in terms of concentration. It is the ratio of product concentrations to reactant concentrations, each raised to their stoichiometric coefficients'
+    },
+    {
+      id: '10',
+      subject: 'Physical Sciences',
+      topic: 'Rates & Equilibrium',
+      front: 'In an industrial application, how can you increase the rate of a reaction?',
+      back: '1. Increase temperature\n2. Increase concentration of reactants\n3. Increase surface area (for solids)\n4. Add a suitable catalyst'
     }
   ];
 

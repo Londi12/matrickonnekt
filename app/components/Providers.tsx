@@ -3,6 +3,7 @@
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '../context/AuthContext';
 import { CalculatorProvider } from '../context/CalculatorContext';
+import { LanguageProvider } from '../context/LanguageContext';
 import ErrorBoundary from './ErrorBoundary';
 import { useEffect } from 'react';
 import { initializeLocalAuth } from '../utils/init';
@@ -21,14 +22,15 @@ export default function Providers({
         .catch(error => console.error('Error initializing local auth:', error));
     }
   }, []);
-
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <CalculatorProvider>
-          <Toaster position="top-right" />
-          {children}
-        </CalculatorProvider>
+        <LanguageProvider>
+          <CalculatorProvider>
+            <Toaster position="top-right" />
+            {children}
+          </CalculatorProvider>
+        </LanguageProvider>
       </AuthProvider>
     </ErrorBoundary>
   );

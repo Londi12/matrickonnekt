@@ -3,18 +3,25 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
-import { UserCircleIcon } from "@heroicons/react/24/outline";
+import { UserCircleIcon, GlobeAltIcon } from "@heroicons/react/24/outline";
+import { useLanguage } from "../context/LanguageContext";
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const { user, logout } = useAuth();
+  const { language, setLanguage } = useLanguage();
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const languageMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
         setIsProfileMenuOpen(false);
+      }
+      if (languageMenuRef.current && !languageMenuRef.current.contains(event.target as Node)) {
+        setIsLanguageMenuOpen(false);
       }
     }
 
@@ -29,6 +36,12 @@ const Navbar: React.FC = () => {
     } catch (error) {
       console.error('Logout error:', error);
     }
+  };
+
+  const languages = {
+    en: 'English',
+    zu: 'isiZulu',
+    af: 'Afrikaans'
   };
 
   return (
@@ -64,11 +77,56 @@ const Navbar: React.FC = () => {
               Flashcards
             </Link>
             <Link
+              href="/past-papers"
+              className="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+            >
+              Past Papers
+            </Link>
+            <Link
+              href="/study-guides"
+              className="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+            >
+              Study Guides
+            </Link>
+            <Link
               href="/resources"
               className="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
             >
               Resources
             </Link>
+            
+            {/* Language Selector */}
+            <div className="relative" ref={languageMenuRef}>
+              <button
+                onClick={() => setIsLanguageMenuOpen(!isLanguageMenuOpen)}
+                className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors duration-200 px-3 py-2"
+              >
+                <GlobeAltIcon className="h-5 w-5" />
+                <span className="text-sm font-medium">{languages[language]}</span>
+              </button>
+
+              {isLanguageMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                  <div className="py-1" role="menu" aria-orientation="vertical">
+                    {Object.entries(languages).map(([code, name]) => (
+                      <button
+                        key={code}
+                        onClick={() => {
+                          setLanguage(code as 'en' | 'zu' | 'af');
+                          setIsLanguageMenuOpen(false);
+                        }}
+                        className={`block w-full text-left px-4 py-2 text-sm ${
+                          language === code ? 'bg-gray-100 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                        role="menuitem"
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             
             {/* Profile Icon with Dropdown */}
             <div className="relative" ref={profileMenuRef}>
@@ -166,17 +224,57 @@ const Navbar: React.FC = () => {
               Study
             </Link>
             <Link 
+              href="/mock-exam" 
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+            >
+              Mock Exam
+            </Link>
+            <Link 
+              href="/flashcards" 
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+            >
+              Flashcards
+            </Link>
+            <Link 
+              href="/past-papers" 
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+            >
+              Past Papers
+            </Link>
+            <Link 
+              href="/study-guides" 
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+            >
+              Study Guides
+            </Link>
+            <Link 
               href="/resources" 
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50"
             >
               Resources
             </Link>
-            <Link 
-              href="/mock-exam" 
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50"
-            >
-              Mock Exams
-            </Link>
+
+            {/* Language Selection in Mobile Menu */}
+            <div className="px-3 py-2">
+              <div className="text-sm font-medium text-gray-500 mb-2">Select Language</div>
+              {Object.entries(languages).map(([code, name]) => (
+                <button
+                  key={code}
+                  onClick={() => {
+                    setLanguage(code as 'en' | 'zu' | 'af');
+                    setIsMenuOpen(false);
+                  }}
+                  className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
+                    language === code 
+                      ? 'text-blue-600 bg-blue-50' 
+                      : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+
             {user ? (
               <>
                 <Link 
