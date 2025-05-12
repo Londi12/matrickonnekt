@@ -1,18 +1,23 @@
 [build]
   command = "npm ci && npm run build"
   publish = ".next"
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF ./"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
 [build.environment]
   NEXT_TELEMETRY_DISABLED = "1"
-  NODE_VERSION = "18"
-  NPM_VERSION = "9"
+  NODE_VERSION = "18.19.0"
+  NPM_VERSION = "9.9.2"
+  PYTHON_VERSION = "false"
+  RUBY_VERSION = "false"
+  GO_VERSION = "false"
 
 [functions]
   external_node_modules = ["@firebase/database"]
   included_files = ["app/config/firebase.ts"]
+  node_bundler = "esbuild"
 
 [[headers]]
   for = "/_next/static/*"
