@@ -94,6 +94,12 @@ const Navbar: React.FC = () => {
             >
               Resources
             </Link>
+            <Link
+              href="/contact"
+              className="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+            >
+              Contact
+            </Link>
             
             {/* Language Selector */}
             <div className="relative" ref={languageMenuRef}>
@@ -252,6 +258,12 @@ const Navbar: React.FC = () => {
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50"
             >
               Resources
+            </Link>
+            <Link 
+              href="/contact" 
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+            >
+              Contact
             </Link>
 
             {/* Language Selection in Mobile Menu */}
