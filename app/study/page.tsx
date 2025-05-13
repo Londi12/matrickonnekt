@@ -411,7 +411,48 @@ const StudyPage = () => {
             {/* Main Content Area */}
             <div className="flex-1 lg:ml-80">
               <div className="max-w-4xl mx-auto px-4 py-6 lg:px-8">
-                {selectedLesson ? (
+                {showSubjectSelection ? (
+                  <div className="space-y-8">
+                    <div className="text-center">
+                      <h1 className="text-3xl font-bold text-gray-900">Select Your Subjects</h1>
+                      <p className="mt-2 text-gray-600">Choose the subjects you want to study</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {subjects.map(subject => (
+                        <button
+                          key={subject.id}
+                          onClick={() => handleSubjectSelect(subject.id)}
+                          className={`p-6 rounded-xl border-2 transition-all ${
+                            selectedSubjects.includes(subject.id)
+                              ? 'border-blue-600 bg-blue-50'
+                              : 'border-gray-200 hover:border-blue-400'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-4">
+                            <span className="text-3xl">{subject.icon}</span>
+                            <div className="text-left">
+                              <h3 className="font-semibold text-gray-900">{subject.name}</h3>
+                              <p className="text-sm text-gray-500">{subject.description}</p>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="text-center">
+                      <button
+                        onClick={handleStartLearning}
+                        disabled={selectedSubjects.length === 0}
+                        className={`px-8 py-3 rounded-lg font-medium transition-colors ${
+                          selectedSubjects.length > 0
+                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                            : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        }`}
+                      >
+                        Start Learning
+                      </button>
+                    </div>
+                  </div>
+                ) : selectedLesson ? (
                   <div className="space-y-6">
                     {/* Lesson Header */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

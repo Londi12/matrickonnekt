@@ -4,6 +4,9 @@ import React, { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 import MobileResponsiveTabs from './MobileResponsiveTabs';
+import { useLanguage } from '../context/LanguageContext';
+import { translatedLessonContent } from '../data/translatedContent';
+import { getLessonTranslations } from '../utils/translations';
 
 // Dynamically import the plotting library to avoid SSR issues
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
@@ -227,7 +230,8 @@ const Examples = ({
   showSolution,
   onShowSolution,
   onNext,
-  onPrev
+  onPrev,
+  lessonId  // Add lessonId parameter
 }: { 
   examples: Array<{ problem: string; solution: string }>;
   currentExample: number;
@@ -235,7 +239,10 @@ const Examples = ({
   onShowSolution: (index: number) => void;
   onNext: () => void;
   onPrev: () => void;
+  lessonId: string;  // Add lessonId type
 }) => {
+  const { language } = useLanguage();  // Add language context
+
   if (!examples || examples.length === 0) {
     return (
       <div className="text-center p-6">
@@ -246,6 +253,10 @@ const Examples = ({
     );
   }
 
+  // Try to get translated examples first
+  const translatedExamples = translatedLessonContent[lessonId]?.[language]?.examples;
+  const examplesToDisplay = translatedExamples || examples;
+
   return (
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-lg shadow-sm">
@@ -254,7 +265,7 @@ const Examples = ({
             Example {currentExample + 1}
           </h4>
           <p className="text-gray-700">
-            {examples[currentExample].problem}
+            {examplesToDisplay[currentExample].problem}
           </p>
         </div>
         <button
@@ -266,11 +277,12 @@ const Examples = ({
         {showSolution[currentExample] && (
           <div className="mt-4 p-4 bg-gray-50 rounded-lg">
             <p className="text-gray-700 whitespace-pre-wrap font-mono">
-              {examples[currentExample].solution}
+              {examplesToDisplay[currentExample].solution}
             </p>
           </div>
         )}
       </div>
+
       <div className="flex justify-between items-center mt-4">
         <button
           onClick={onPrev}
@@ -284,13 +296,13 @@ const Examples = ({
           Previous
         </button>
         <span className="text-gray-500">
-          {currentExample + 1} of {examples.length}
+          {currentExample + 1} of {examplesToDisplay.length}
         </span>
         <button
           onClick={onNext}
-          disabled={currentExample === examples.length - 1}
+          disabled={currentExample === examplesToDisplay.length - 1}
           className={`px-4 py-2 rounded-lg ${
-            currentExample === examples.length - 1
+            currentExample === examplesToDisplay.length - 1
               ? "bg-gray-100 text-gray-400 cursor-not-allowed"
               : "bg-blue-600 text-white hover:bg-blue-700"
           }`}
@@ -303,10 +315,16 @@ const Examples = ({
 };
 
 // Theory Component
-const Theory = ({ content }: { content: string[] }) => {
+const Theory = ({ content, lessonId }: { content: string[], lessonId: string }) => {
+  const { language } = useLanguage();
+  
+  // Try to get translated content first
+  const translatedContent = translatedLessonContent[lessonId]?.[language]?.theory;
+  const contentToDisplay = translatedContent || content;
+
   return (
     <div className="p-6">
-      {content.map((point, index) => (
+      {contentToDisplay.map((point, index) => (
         <div 
           key={`theory-${index}`} 
           className="text-gray-700 mb-2"
@@ -512,7 +530,7 @@ export default function StudyPage() {
                   <div className="bg-white rounded-xl shadow-sm border border-gray-100 min-h-[calc(100vh-16rem)] overflow-y-auto">
                     <div className="p-4 lg:p-6">
                       {activeTab === "theory" && (
-                        <Theory content={currentLesson.theory || []} />
+                        <Theory content={currentLesson.theory || []} lessonId={currentLesson.id} />
                       )}
 
                       {activeTab === "examples" && (
@@ -528,6 +546,7 @@ export default function StudyPage() {
                           }
                           onNext={handleNextExample}
                           onPrev={handlePrevExample}
+                          lessonId={currentLesson.id} // Pass lessonId
                         />
                       )}
 

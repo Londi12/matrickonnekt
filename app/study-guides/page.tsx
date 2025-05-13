@@ -3,7 +3,10 @@
 import { useState } from 'react';
 import Navbar from '../components/Navbar';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { DocumentArrowDownIcon, PrinterIcon } from '@heroicons/react/24/outline';
+import { StudyMaterial, studyMaterials } from '../data/studyMaterials';
+import { handleWCEDDownload } from '../utils/wcedDownload';
 
 const translations = {
   en: {
@@ -12,6 +15,8 @@ const translations = {
     filterBySubject: 'Filter by Subject',
     filterByType: 'Filter by Type',
     download: 'Download',
+    downloadError: 'Failed to download. Please try again.',
+    downloading: 'Downloading',
     print: 'Print',
     studyGuide: 'Study Guide',
     worksheet: 'Worksheet'
@@ -22,6 +27,8 @@ const translations = {
     filterBySubject: 'Hlunga ngoMbhalo',
     filterByType: 'Hlunga ngoHlobo',
     download: 'Landa',
+    downloadError: 'Yehlulekile ukulanda. Sicela uzame futhi.',
+    downloading: 'Kuyalanda',
     print: 'Printa',
     studyGuide: 'Incwadi Yokufunda',
     worksheet: 'I-worksheet'
@@ -32,6 +39,8 @@ const translations = {
     filterBySubject: 'Filter volgens Vak',
     filterByType: 'Filter volgens Tipe',
     download: 'Aflaai',
+    downloadError: 'Kon nie aflaai nie. Probeer asseblief weer.',
+    downloading: 'Laai af',
     print: 'Druk',
     studyGuide: 'Studiegids',
     worksheet: 'Werkkaart'
@@ -41,127 +50,35 @@ const translations = {
 export default function StudyGuidesPage() {
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
+  const [isDownloading, setIsDownloading] = useState<number | null>(null);
   const { language } = useLanguage();
-  const t = translations[language];
-  const subjects = [
-    'Accounting',
-    'Agricultural Sciences',
-    'Business Studies',
-    'Consumer Studies',
-    'Dramatic Arts',
-    'Economics',
-    'English First Additional Language',
-    'English Home Language',
-    'Geography',
-    'History',
-    'IsiZulu First Additional Language',
-    'IsiZulu Home Language',
-    'Life Sciences',
-    'Mathematical Literacy',
-    'Mathematics',
-    'Physical Sciences',
-    'Religion Studies',
-    'Tourism',
-    'Visual Arts'
-  ];
+  const { user } = useAuth();
+  const t = translations[language];  // Get unique subjects from study materials
+  const subjects = Array.from(new Set(studyMaterials.map(material => material.subject))).sort();
   const types = ['study-guide', 'worksheet'];
-  const materials = [
-    // Mathematics
-    {
-      id: 1,
-      subject: 'Mathematics',
-      type: 'study-guide',
-      title: 'Calculus Comprehensive Guide',
-      description: 'A complete guide to differential and integral calculus',
-      fileUrl: '/guides/math/calculus-guide.pdf'
-    },
-    {
-      id: 2,
-      subject: 'Mathematics',
-      type: 'worksheet',
-      title: 'Trigonometry Practice',
-      description: 'Practice problems covering all trigonometry concepts',
-      fileUrl: '/guides/math/trig-worksheet.pdf'
-    },
-    // Physical Sciences
-    {
-      id: 3,
-      subject: 'Physical Sciences',
-      type: 'study-guide',
-      title: 'Physics Mechanics Guide',
-      description: 'Comprehensive guide to mechanics and motion',
-      fileUrl: '/guides/physics/mechanics-guide.pdf'
-    },
-    // Life Sciences
-    {
-      id: 4,
-      subject: 'Life Sciences',
-      type: 'study-guide',
-      title: 'Evolution and Genetics',
-      description: 'Complete study guide for evolution and genetics',
-      fileUrl: '/guides/lifesciences/evolution-genetics.pdf'
-    },
-    // Accounting
-    {
-      id: 5,
-      subject: 'Accounting',
-      type: 'study-guide',
-      title: 'Financial Statements Guide',
-      description: 'Comprehensive guide to preparing financial statements',
-      fileUrl: '/guides/accounting/financial-statements.pdf'
-    },
-    // Business Studies
-    {
-      id: 6,
-      subject: 'Business Studies',
-      type: 'worksheet',
-      title: 'Business Strategies Worksheet',
-      description: 'Practice exercises on business strategies and management',
-      fileUrl: '/guides/business/strategies-worksheet.pdf'
-    },
-    // Geography
-    {
-      id: 7,
-      subject: 'Geography',
-      type: 'study-guide',
-      title: 'Geomorphology Guide',
-      description: 'Complete guide to geographical formations and processes',
-      fileUrl: '/guides/geography/geomorphology.pdf'
-    },
-    // History
-    {
-      id: 8,
-      subject: 'History',
-      type: 'study-guide',
-      title: 'Cold War Era Study Guide',
-      description: 'Comprehensive coverage of the Cold War period',
-      fileUrl: '/guides/history/cold-war.pdf'
-    },
-    // English Home Language
-    {
-      id: 9,
-      subject: 'English Home Language',
-      type: 'worksheet',
-      title: 'Literature Analysis Exercises',
-      description: 'Practice exercises for literary analysis and comprehension',
-      fileUrl: '/guides/english/literature-analysis.pdf'
-    },
-    // IsiZulu Home Language
-    {
-      id: 10,
-      subject: 'IsiZulu Home Language',
-      type: 'study-guide',
-      title: 'IsiZulu Literature Guide',
-      description: 'Comprehensive guide to IsiZulu literature and poetry',
-      fileUrl: '/guides/isizulu/literature-guide.pdf'
-    }
-    // Add more materials as needed
-  ];
+  const { studyMaterials } = require('../data/studyMaterials');
+  const materials = studyMaterials;
 
-  const filteredMaterials = materials.filter(material => 
+  const filteredMaterials = materials.filter((material: StudyMaterial) => 
     (selectedSubject === 'all' || material.subject === selectedSubject) &&
     (selectedType === 'all' || material.type === selectedType)
   );
+
+  const handleDownload = async (material: StudyMaterial) => {
+    try {
+      setIsDownloading(material.id);
+      const result = await handleWCEDDownload(material.id, user?.uid ?? 'anonymous', material.subject);
+      if (result.success) {
+        window.open(material.fileUrl, '_blank');
+      } else {
+        alert(result.error);
+      }
+    } catch (error) {
+      alert(translations[language].downloadError ?? 'Failed to download. Please try again.');
+    } finally {
+      setIsDownloading(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -203,26 +120,70 @@ export default function StudyGuidesPage() {
 
         {/* Materials Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredMaterials.map((material) => (
+          {filteredMaterials.map((material: StudyMaterial) => (
             <div key={material.id} className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{material.title}</h3>
-              <p className="text-gray-600 mb-4">{material.description}</p>
-              <div className="space-x-4 flex items-center">
-                <a
-                  href={material.fileUrl}
-                  download
-                  className="inline-flex items-center text-blue-600 hover:text-blue-700"
-                >
-                  <DocumentArrowDownIcon className="h-5 w-5 mr-2" />
-                  {t.download}
-                </a>
-                <button
-                  onClick={() => window.print()}
-                  className="inline-flex items-center text-green-600 hover:text-green-700"
-                >
-                  <PrinterIcon className="h-5 w-5 mr-2" />
-                  {t.print}
-                </button>
+              <h3 className="font-semibold text-gray-900">{material.title[language]}</h3>
+              <p className="text-gray-600 mt-1 text-sm">{material.description[language]}</p>
+              <div className="mt-4 flex items-center justify-between">
+                <span className={`text-sm ${
+                  material.type === 'study-guide' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                } px-2 py-0.5 rounded-full`}>
+                  {material.type === 'study-guide' ? t.studyGuide : t.worksheet}
+                </span>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleDownload(material)}
+                    disabled={isDownloading === material.id}
+                    className={`inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded
+                      ${isDownloading === material.id 
+                        ? 'bg-blue-400 cursor-not-allowed' 
+                        : 'text-white bg-blue-600 hover:bg-blue-700'
+                      }`}
+                  >
+                    {isDownloading === material.id ? (
+                      <>
+                        <svg 
+                          className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          fill="none" 
+                          viewBox="0 0 24 24"
+                        >
+                          <circle 
+                            className="opacity-25" 
+                            cx="12" 
+                            cy="12" 
+                            r="10" 
+                            stroke="currentColor" 
+                            strokeWidth="4"
+                          />
+                          <path 
+                            className="opacity-75" 
+                            fill="currentColor" 
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
+                        </svg>
+                        {t.downloading}...
+                      </>
+                    ) : material.officialSource ? (
+                      <>
+                        <span className="mr-1">WCED</span>
+                        <DocumentArrowDownIcon className="h-4 w-4" />
+                      </>
+                    ) : (
+                      <>
+                        {t.download}
+                        <DocumentArrowDownIcon className="h-4 w-4 ml-1" />
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => window.print()}
+                    className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    {t.print}
+                    <PrinterIcon className="h-4 w-4 ml-1" />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
