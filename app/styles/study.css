@@ -1,0 +1,39 @@
+/* Study page specific styles */
+.prose {
+  max-width: 100%; /* Override default prose max-width to prevent overflow */
+}
+
+/* Ensure code blocks don't overflow */
+.prose pre {
+  overflow-x: auto;
+}
+
+/* Better spacing for lesson content */
+.prose h2 {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.prose h3 {
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Ensure math formulas display properly */
+.prose .math {
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+/* Make images responsive */
+.prose img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Improve table display */
+.prose table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+}

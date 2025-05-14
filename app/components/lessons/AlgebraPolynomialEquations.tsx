@@ -6,7 +6,7 @@ interface Props {}
 
 const AlgebraPolynomialEquations: React.FC<Props> = () => {
   return (
-    <div className="prose max-w-none">
+    <div className="prose max-w-none w-full">
       <section className="mb-8">
         <h2>Polynomial Equations &amp; Inequalities</h2>
         <p className="text-gray-600 mb-4">

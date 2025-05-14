@@ -89,12 +89,6 @@ const Navbar: React.FC = () => {
               Study Guides
             </Link>
             <Link
-              href="/resources"
-              className="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
-            >
-              Resources
-            </Link>
-            <Link
               href="/contact"
               className="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
             >
@@ -252,12 +246,6 @@ const Navbar: React.FC = () => {
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50"
             >
               Study Guides
-            </Link>
-            <Link 
-              href="/resources" 
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50"
-            >
-              Resources
             </Link>
             <Link 
               href="/contact" 

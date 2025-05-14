@@ -47,19 +47,17 @@ export default function MobileResponsiveTabs({ tabs, activeTab, onTabChange }: M
             ))}
           </div>
         )}
-      </div>
-
-      {/* Desktop View - Horizontal Tabs */}
+      </div>      {/* Desktop View - Horizontal Tabs */}
       <div className="hidden lg:block">
-        <div className="flex space-x-2 overflow-x-auto pb-2">
+        <div className="flex space-x-2 overflow-x-auto border-b border-gray-200">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
+              className={`px-6 py-3 rounded-t-lg whitespace-nowrap transition-colors ${
                 activeTab === tab.id
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
+                  ? "bg-white text-blue-600 border-t border-l border-r border-gray-200 font-medium -mb-px"
+                  : "text-gray-500 hover:text-gray-700"
               }`}
             >
               {tab.label}

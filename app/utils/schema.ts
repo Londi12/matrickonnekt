@@ -12,7 +12,7 @@ export function generateCourseSchema(course: {
     provider: {
       '@type': 'Organization',
       name: course.provider || 'Matrickonnekt',
-      sameAs: 'https://matrickonnekt.com'
+      sameAs: 'https://matrickonnekt.netlify.app'
     },
     ...(course.topics && {
       hasCourseInstance: course.topics.map(topic => ({
@@ -29,7 +29,7 @@ export function generateEducationalOrgSchema() {
     '@type': 'EducationalOrganization',
     name: 'Matrickonnekt',
     description: 'Comprehensive Grade 12 learning platform featuring interactive lessons, mock exams, and study resources',
-    url: 'https://matrickonnekt.com',
+    url: 'https://matrickonnekt.netlify.app',
     address: {
       '@type': 'PostalAddress',
       addressCountry: 'ZA'

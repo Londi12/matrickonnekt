@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/Navbar';
 import AuthCheck from '../components/AuthCheck';
 import { useAuth } from '../context/AuthContext';
+import '../styles/study.css';
 import { updateStreak, markTopicCompleted, updateStudyTime, markLessonCompleted } from '../utils/userProgress';
 import { updatedSubjects } from '../data/updatedSubjects';
 import CurriculumDemoSection from '../components/CurriculumDemoSection';
@@ -296,8 +297,7 @@ const StudyPage = () => {
   return (
     <AuthCheck required={true}>
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <main className="flex-1">
+        <Navbar />        <main className="flex-1 w-full">
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -313,16 +313,14 @@ const StudyPage = () => {
             </svg>
           </button>
 
-          <div className="flex flex-col lg:flex-row">
-            {/* Sidebar - Subject & Topic Navigation */}
-            <div className={`
+          <div className="flex flex-col lg:flex-row lg:gap-0" style={{ width: '100%' }}>            {/* Sidebar - Subject & Topic Navigation */}            <div className={`
               fixed lg:static inset-0 bg-white lg:bg-transparent
-              w-full lg:w-80 h-full lg:min-h-screen overflow-y-auto
+              w-full lg:w-64 h-full lg:min-h-screen overflow-y-auto
               transform transition-transform duration-300 ease-in-out
               ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
               lg:translate-x-0 z-40
               lg:border-r lg:border-gray-200
-            `}>
+            `} style={{ flexShrink: 0 }}>
               <div className="sticky top-0 bg-white p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold text-gray-900">Your Study Path</h2>
@@ -405,12 +403,9 @@ const StudyPage = () => {
                       </div>
                     </div>
                   ))}
-              </div>
-            </div>
-
-            {/* Main Content Area */}
-            <div className="flex-1 lg:ml-80">
-              <div className="max-w-4xl mx-auto px-4 py-6 lg:px-8">
+              </div>            </div>            {/* Main Content Area */}
+            <div className="flex-1 lg:pl-0">
+              <div className="max-w-4xl px-4 py-6 lg:px-4">
                 {showSubjectSelection ? (
                   <div className="space-y-8">
                     <div className="text-center">
@@ -479,9 +474,7 @@ const StudyPage = () => {
                           <PencilIcon className="h-5 w-5" />
                         </button>
                       </div>
-                    </div>
-
-                    {/* Lesson Content */}
+                    </div>                    {/* Lesson Content */}
                     <div className="bg-white rounded-xl shadow-sm">
                       {/* Tabs */}
                       <MobileResponsiveTabs
@@ -495,7 +488,7 @@ const StudyPage = () => {
                       />
 
                       {/* Content */}
-                      <div className="p-4 md:p-6">
+                      <div className="p-4 md:p-6 max-w-full overflow-x-auto">
                         {getActiveLessonContent()}
                       </div>
                     </div>
