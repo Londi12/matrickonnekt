@@ -91,12 +91,15 @@ interface Subject {
 
 const subjects = updatedSubjects.map(subject => ({
   id: subject.id,
-  name: subject.name,
-  icon: subject.id === 'mathematics' ? '📐' : 
+  name: subject.name,  icon: subject.id === 'mathematics' ? '📐' : 
         subject.id === 'physical-sciences' ? '🔬' : 
         subject.id === 'life-sciences' ? '🧬' : 
         subject.id === 'accounting' ? '📊' : 
-        subject.id === 'english-hl' ? '📖' : '📚',
+        subject.id === 'english-hl' ? '📖' : 
+        subject.id === 'consumer-studies' ? '🛍️' : 
+        subject.id === 'tourism' ? '🌍' : 
+        subject.id === 'information-technology' ? '💻' : 
+        subject.id === 'computer-applications-technology' ? '🖥️' : '📚',
   description: subject.description,
   progress: 0,
   lastAccessed: 'Not yet accessed',

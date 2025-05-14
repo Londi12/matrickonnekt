@@ -82,7 +82,11 @@ const CurriculumDemoSection: React.FC<CurriculumDemoSectionProps> = ({ subjects 
               {subject.id === 'mathematics' ? '📐' : 
                subject.id === 'physical-sciences' ? '🔬' : 
                subject.id === 'life-sciences' ? '🧬' : 
-               subject.id === 'accounting' ? '📊' : '📚'}
+               subject.id === 'accounting' ? '📊' : 
+               subject.id === 'consumer-studies' ? '🛍️' : 
+               subject.id === 'tourism' ? '🌍' : 
+               subject.id === 'information-technology' ? '💻' : 
+               subject.id === 'computer-applications-technology' ? '🖥️' : '📚'}
             </span>
             <span className="font-medium">{subject.name}</span>
           </button>

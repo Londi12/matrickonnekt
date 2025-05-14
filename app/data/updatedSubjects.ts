@@ -759,6 +759,346 @@ export const updatedSubjects: Subject[] = [
             difficulty: 'advanced',
             duration: 50,
             topics: ['Sales projections', 'Expense projections', 'Budgeted profit']
+          }        ]
+      }
+    ]
+  },
+  {
+    id: 'consumer-studies',
+    name: 'Consumer Studies',
+    description: 'Grade 12 Consumer Studies covering consumer knowledge, food production, clothing, and entrepreneurship.',
+    iconUrl: '/icons/consumer-icon.svg',
+    modules: [
+      {
+        id: 'consumer',
+        name: 'The Consumer',
+        description: 'Consumer rights, responsibilities and financial aspects',
+        lessons: [
+          {
+            id: 'consumer-decisions',
+            title: 'Consumer Decision-Making',
+            description: 'Factors influencing consumer choices and behavior',
+            content: 'consumerDecisions',
+            difficulty: 'intermediate',
+            duration: 45,
+            topics: ['Consumer rights', 'Financial decisions', 'Contractual aspects']
+          },
+          {
+            id: 'sustainable-consumption',
+            title: 'Sustainable Consumption',
+            description: 'Impact of consumer choices on sustainability',
+            content: 'sustainableConsumption',
+            difficulty: 'intermediate',
+            duration: 45,
+            topics: ['Environmental impact', 'Ethical consumption', 'Resource management']
+          }
+        ]
+      },
+      {
+        id: 'food-nutrition',
+        name: 'Food & Nutrition',
+        description: 'Food production, safety, and nutritional aspects',
+        lessons: [
+          {
+            id: 'food-safety',
+            title: 'Food Safety & Quality Control',
+            description: 'Ensuring food safety and quality in production',
+            content: 'foodSafety',
+            difficulty: 'intermediate',
+            duration: 50,
+            topics: ['Food hygiene', 'Quality control', 'Food regulations']
+          },
+          {
+            id: 'food-preservation',
+            title: 'Food Preservation',
+            description: 'Methods for preserving and storing food',
+            content: 'foodPreservation',
+            difficulty: 'intermediate',
+            duration: 45,
+            topics: ['Preservation methods', 'Storage techniques', 'Shelf life']
+          }
+        ]
+      },
+      {
+        id: 'entrepreneurship',
+        name: 'Entrepreneurship',
+        description: 'Small-scale production and entrepreneurial skills',
+        lessons: [
+          {
+            id: 'small-business',
+            title: 'Small Enterprise Development',
+            description: 'Planning and developing a small production enterprise',
+            content: 'smallBusiness',
+            difficulty: 'advanced',
+            duration: 50,
+            topics: ['Business planning', 'Production factors', 'Target market']
+          },
+          {
+            id: 'costing-pricing',
+            title: 'Costing & Pricing',
+            description: 'Calculating production costs and setting prices',
+            content: 'costingPricing',
+            difficulty: 'intermediate',
+            duration: 45,
+            topics: ['Cost calculations', 'Pricing strategies', 'Profit margins']
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'tourism',
+    name: 'Tourism',
+    description: 'Grade 12 Tourism covering tourism attractions, sectors, sustainable tourism, and travel.',
+    iconUrl: '/icons/tourism-icon.svg',
+    modules: [
+      {
+        id: 'attractions',
+        name: 'Tourism Attractions',
+        description: 'World Heritage Sites and major international attractions',
+        lessons: [
+          {
+            id: 'world-heritage',
+            title: 'World Heritage Sites',
+            description: 'South African UNESCO World Heritage Sites',
+            content: 'worldHeritageSites',
+            difficulty: 'intermediate',
+            duration: 45,
+            topics: ['Cultural sites', 'Natural sites', 'Mixed heritage sites']
+          },
+          {
+            id: 'global-attractions',
+            title: 'International Tourism Icons',
+            description: 'Major global tourism destinations and landmarks',
+            content: 'globalAttractions',
+            difficulty: 'intermediate',
+            duration: 50,
+            topics: ['Famous landmarks', 'Natural wonders', 'Cultural attractions']
+          }
+        ]
+      },
+      {
+        id: 'sustainable-tourism',
+        name: 'Sustainable Tourism',
+        description: 'Environmental and social responsibility in tourism',
+        lessons: [
+          {
+            id: 'responsible-tourism',
+            title: 'Responsible Tourism Practices',
+            description: 'Implementation of sustainable tourism principles',
+            content: 'responsibleTourism',
+            difficulty: 'intermediate',
+            duration: 45,
+            topics: ['Eco-tourism', 'Community involvement', 'Conservation']
+          },
+          {
+            id: 'tourism-impacts',
+            title: 'Tourism Impacts',
+            description: 'Positive and negative impacts of tourism',
+            content: 'tourismImpacts',
+            difficulty: 'intermediate',
+            duration: 45,
+            topics: ['Environmental impacts', 'Socio-cultural impacts', 'Economic impacts']
+          }
+        ]
+      },
+      {
+        id: 'travel-geography',
+        name: 'Tourism Geography & Travel',
+        description: 'Time zones, travel calculations and documentation',
+        lessons: [
+          {
+            id: 'foreign-exchange',
+            title: 'Foreign Exchange Calculations',
+            description: 'Currency conversions and exchange rate applications',
+            content: 'foreignExchange',
+            difficulty: 'intermediate',
+            duration: 45,
+            topics: ['Exchange rates', 'Currency conversions', 'BSR and commission']
+          },
+          {
+            id: 'time-zones',
+            title: 'World Time Zones',
+            description: 'Calculating time differences for international travel',
+            content: 'timeZones',
+            difficulty: 'intermediate',
+            duration: 50,
+            topics: ['International date line', 'UTC/GMT', 'Travel schedules']
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'information-technology',
+    name: 'Information Technology',
+    description: 'Grade 12 Information Technology covering programming, databases, and systems development.',
+    iconUrl: '/icons/it-icon.svg',
+    modules: [
+      {
+        id: 'solution-development',
+        name: 'Solution Development',
+        description: 'Programming principles and software development',
+        lessons: [
+          {
+            id: 'oop-concepts',
+            title: 'Object-Oriented Programming',
+            description: 'Advanced OOP concepts and implementation',
+            content: 'oopConcepts',
+            difficulty: 'advanced',
+            duration: 50,
+            topics: ['Classes & objects', 'Inheritance', 'Polymorphism']
+          },
+          {
+            id: 'data-structures',
+            title: 'Data Structures & Algorithms',
+            description: 'Implementation and application of data structures',
+            content: 'dataStructures',
+            difficulty: 'advanced',
+            duration: 55,
+            topics: ['Arrays', 'Linked lists', 'Searching & sorting']
+          }
+        ]
+      },
+      {
+        id: 'database-management',
+        name: 'Database Management',
+        description: 'Database design and SQL implementation',
+        lessons: [
+          {
+            id: 'database-design',
+            title: 'Database Design & Normalization',
+            description: 'Relational database design principles',
+            content: 'databaseDesign',
+            difficulty: 'advanced',
+            duration: 50,
+            topics: ['ER diagrams', 'Normalization', 'Data integrity']
+          },
+          {
+            id: 'sql-operations',
+            title: 'Advanced SQL',
+            description: 'Complex SQL queries and database operations',
+            content: 'advancedSql',
+            difficulty: 'advanced',
+            duration: 50,
+            topics: ['Complex queries', 'Joins', 'Stored procedures']
+          }
+        ]
+      },
+      {
+        id: 'it-implications',
+        name: 'Social Implications',
+        description: 'Ethical and social aspects of IT',
+        lessons: [
+          {
+            id: 'it-ethics',
+            title: 'IT Ethics & Legislation',
+            description: 'Ethical considerations and legal aspects of IT',
+            content: 'itEthics',
+            difficulty: 'intermediate',
+            duration: 45,
+            topics: ['Privacy', 'Intellectual property', 'Cybercrime']
+          },
+          {
+            id: 'emerging-tech',
+            title: 'Emerging Technologies',
+            description: 'Latest trends and developments in IT',
+            content: 'emergingTech',
+            difficulty: 'intermediate',
+            duration: 45,
+            topics: ['AI & machine learning', 'IoT', 'Cloud computing']
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'computer-applications-technology',
+    name: 'Computer Applications Technology',
+    description: 'Grade 12 Computer Applications Technology covering applications, systems, and information management.',
+    iconUrl: '/icons/cat-icon.svg',
+    modules: [
+      {
+        id: 'office-applications',
+        name: 'Solution Development',
+        description: 'Advanced office productivity applications',
+        lessons: [
+          {
+            id: 'word-processing',
+            title: 'Advanced Word Processing',
+            description: 'Complex document creation and management',
+            content: 'wordProcessing',
+            difficulty: 'intermediate',
+            duration: 45,
+            topics: ['Mail merge', 'Forms', 'Styles & templates']
+          },
+          {
+            id: 'spreadsheets',
+            title: 'Advanced Spreadsheets',
+            description: 'Complex calculations and data analysis',
+            content: 'spreadsheets',
+            difficulty: 'advanced',
+            duration: 50,
+            topics: ['Functions', 'Pivot tables', 'Data validation']
+          },
+          {
+            id: 'databases',
+            title: 'Database Applications',
+            description: 'Creating and managing relational databases',
+            content: 'databases',
+            difficulty: 'advanced',
+            duration: 50,
+            topics: ['Queries', 'Forms', 'Reports']
+          }
+        ]
+      },
+      {
+        id: 'systems-technologies',
+        name: 'Systems Technologies',
+        description: 'Hardware, software and computer management',
+        lessons: [
+          {
+            id: 'hardware-concepts',
+            title: 'Computer Hardware',
+            description: 'Components and specifications of computer systems',
+            content: 'hardwareConcepts',
+            difficulty: 'intermediate',
+            duration: 45,
+            topics: ['Processing devices', 'Storage', 'Input/output devices']
+          },
+          {
+            id: 'software-management',
+            title: 'Software Management',
+            description: 'Operating systems and application software',
+            content: 'softwareManagement',
+            difficulty: 'intermediate',
+            duration: 45,
+            topics: ['Operating systems', 'Utility software', 'Application software']
+          }
+        ]
+      },
+      {
+        id: 'information-management',
+        name: 'Information Management',
+        description: 'Data handling and information processing',
+        lessons: [
+          {
+            id: 'data-collection',
+            title: 'Data Collection & Analysis',
+            description: 'Gathering and processing information',
+            content: 'dataCollection',
+            difficulty: 'intermediate',
+            duration: 45,
+            topics: ['Information sources', 'Data validation', 'Data analysis']
+          },
+          {
+            id: 'info-presentation',
+            title: 'Information Presentation',
+            description: 'Presenting data in appropriate formats',
+            content: 'infoPresentation',
+            difficulty: 'intermediate',
+            duration: 40,
+            topics: ['Report formats', 'Visual representation', 'Audience considerations']
           }
         ]
       }
