@@ -5,7 +5,7 @@ import Navbar from '../components/Navbar';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { DocumentArrowDownIcon, PrinterIcon } from '@heroicons/react/24/outline';
-import { StudyMaterial, studyMaterials } from '../data/studyMaterials';
+import { StudyMaterial } from '../data/studyMaterials';
 import { handleWCEDDownload } from '../utils/wcedDownload';
 
 const translations = {
@@ -53,10 +53,14 @@ export default function StudyGuidesPage() {
   const [isDownloading, setIsDownloading] = useState<number | null>(null);
   const { language } = useLanguage();
   const { user } = useAuth();
-  const t = translations[language];  // Get unique subjects from study materials
+  const t = translations[language];
+    // Import study materials first
+  const studyMaterialsModule = require('../data/studyMaterials');
+  const studyMaterials: StudyMaterial[] = studyMaterialsModule.studyMaterials;
+  
+  // Then use them
   const subjects = Array.from(new Set(studyMaterials.map(material => material.subject))).sort();
   const types = ['study-guide', 'worksheet'];
-  const { studyMaterials } = require('../data/studyMaterials');
   const materials = studyMaterials;
 
   const filteredMaterials = materials.filter((material: StudyMaterial) => 
